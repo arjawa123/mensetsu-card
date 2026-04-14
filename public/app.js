@@ -54,7 +54,7 @@ async function init() {
     const data = await res.json();
     allCards = data.cards;
     els.jikoshoukai.value = data.jikoshoukai || "";
-    
+
     applyFilters();
     refreshStats();
 }
@@ -86,8 +86,8 @@ async function refreshStats() {
 
 function renderManagementList() {
     const query = els.cardSearch.value.toLowerCase();
-    const filtered = allCards.filter(c => 
-        c.question.toLowerCase().includes(query) || 
+    const filtered = allCards.filter(c =>
+        c.question.toLowerCase().includes(query) ||
         c.answer.toLowerCase().includes(query)
     );
 
@@ -136,15 +136,15 @@ els.addModalClose.onclick = () => els.addCardModal.style.display = "none";
 els.addModalSave.onclick = async () => {
     const body = { question: els.newQ.value, answer: els.newA.value, tips: els.newT.value };
     if (!body.question || !body.answer) return alert("Question and Answer are required.");
-    
+
     await fetch('/api/cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     });
-    
+
     els.addCardModal.style.display = "none";
-    init(); 
+    init();
 };
 
 // --- REVIEW LOGIC ---
@@ -175,18 +175,18 @@ function renderReview() {
 
     const current = filteredCards[currentIndex % total];
     els.progress.innerText = `${(currentIndex % total) + 1} / ${total}`;
-    
+
     els.q.innerText = current.question;
     els.qEdit.value = current.question;
-    
+
     let html = `<div class="bubble left">${current.question}</div>`;
-    
+
     if (isEditingCard) {
-        html += `<div class="bubble right"><textarea id="a-inline-edit" class="bubble-edit">${current.answer}</textarea></div>`;
+        html += `<div class="bubble right"><textarea id="a-inline-edit" class="bubble-edit" spellcheck="false">${current.answer}</textarea></div>`;
     } else {
         html += `<div class="bubble right">${current.answer}</div>`;
     }
-    
+
     if (current.followUps && current.followUps.length > 0) {
         current.followUps.forEach(f => {
             const side = f.type === 'q' ? 'left' : 'right';
@@ -198,12 +198,12 @@ function renderReview() {
         });
     }
     els.chatBubbles.innerHTML = html;
-    
+
     const hasTips = current.tips && current.tips.trim().length > 0;
     els.tipsContainer.classList.toggle('hidden', !hasTips && !isEditingCard);
     els.tDisplay.innerText = current.tips || "No tips added.";
     els.tEdit.value = current.tips || "";
-    
+
     els.card.classList.remove('flipped');
 }
 
@@ -212,7 +212,6 @@ function toggleEditVisibility(editing) {
         els.q.classList.add('hidden');
         els.qEdit.classList.remove('hidden');
         els.chatBubbles.classList.remove('hidden');
-        els.aEdit.classList.remove('hidden'); 
         els.tipsContainer.classList.remove('hidden');
         els.tDisplay.classList.add('hidden');
         els.tEdit.classList.remove('hidden');
@@ -228,7 +227,6 @@ function toggleEditVisibility(editing) {
         els.tipsContainer.classList.toggle('hidden', !hasTips);
         els.tDisplay.classList.remove('hidden');
         els.tEdit.classList.add('hidden');
-        els.aEdit.classList.add('hidden');
         document.querySelector('.follow-up-actions').classList.remove('hidden');
         document.getElementById('card').classList.remove('editing');
         renderReviewAfterSave();
@@ -238,8 +236,8 @@ function toggleEditVisibility(editing) {
 function renderReviewForEdit() {
     const current = filteredCards[currentIndex % filteredCards.length];
     let html = `<div class="bubble left">${current.question}</div>`;
-    html += `<div class="bubble right"><textarea id="a-inline-edit" class="bubble-edit">${current.answer}</textarea></div>`;
-    
+    html += `<div class="bubble right"><textarea id="a-inline-edit" class="bubble-edit" spellcheck="false">${current.answer}</textarea></div>`;
+
     if (current.followUps && current.followUps.length > 0) {
         current.followUps.forEach(f => {
             const side = f.type === 'q' ? 'left' : 'right';
@@ -254,7 +252,7 @@ function renderReviewAfterSave() {
     const current = filteredCards[currentIndex % filteredCards.length];
     let html = `<div class="bubble left">${current.question}</div>`;
     html += `<div class="bubble right">${current.answer}</div>`;
-    
+
     if (current.followUps && current.followUps.length > 0) {
         current.followUps.forEach(f => {
             const side = f.type === 'q' ? 'left' : 'right';
@@ -305,7 +303,7 @@ async function refreshCards(currentId) {
         const idxInFiltered = filteredCards.findIndex(c => c.id === currentId);
         if (idxInFiltered !== -1) filteredCards[idxInFiltered] = newCurrent;
     }
-    
+
     const wasFlipped = els.card.classList.contains('flipped');
     renderReview();
     if (wasFlipped) els.card.classList.add('flipped');
@@ -315,7 +313,7 @@ async function toggleEditMode(e) {
     if (e) e.stopPropagation();
     const wasFlipped = els.card.classList.contains('flipped');
     isEditingCard = !isEditingCard;
-    
+
     if (isEditingCard) {
         [els.editBtn, els.editBtnFront].forEach(btn => {
             btn.classList.add('editing');
@@ -343,7 +341,7 @@ async function updateStatus(status) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
     });
-    
+
     const original = allCards.find(c => c.id === current.id);
     if (original) original.status = status;
 
@@ -364,7 +362,7 @@ async function updateStatus(status) {
 async function deleteCard() {
     const current = filteredCards[currentIndex % filteredCards.length];
     if (!confirm("Hapus kartu ini selamanya?")) return;
-    
+
     await fetch(`/api/cards/${current.id}`, { method: 'DELETE' });
     allCards = allCards.filter(c => c.id !== current.id);
     applyFilters();
@@ -374,22 +372,22 @@ async function deleteCard() {
 async function saveCardChanges() {
     const current = filteredCards[currentIndex % filteredCards.length];
     const inlineEdit = document.getElementById('a-inline-edit');
-    const body = { 
+    const body = {
         question: els.qEdit.value,
-        answer: inlineEdit ? inlineEdit.value : current.answer, 
-        tips: els.tEdit.value 
+        answer: inlineEdit ? inlineEdit.value : current.answer,
+        tips: els.tEdit.value
     };
-    
+
     await fetch(`/api/cards/${current.id}/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     });
-    
+
     current.question = body.question;
     current.answer = body.answer;
     current.tips = body.tips;
-    
+
     const original = allCards.find(c => c.id === current.id);
     if (original) {
         Object.assign(original, body);
