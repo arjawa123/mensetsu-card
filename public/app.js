@@ -80,6 +80,16 @@ function applyVocabHighlight(vocabWords) {
     });
 }
 
+/**
+ * Tambahkan newline setelah tanda tanya (? / ？) jika belum ada newline.
+ * Hanya untuk keperluan tampilan, tidak mengubah data asli.
+ */
+function formatQuestion(text) {
+    if (!text) return text;
+    // Tambahkan \n setelah ? atau ？ jika karakter selanjutnya bukan whitespace/newline
+    return text.replace(/([?？])(?!\s)/g, '$1\n');
+}
+
 const els = {
     progress: document.getElementById('progress-text'),
     hafalBadge: document.getElementById('hafal-count'),
@@ -325,12 +335,12 @@ function renderReview() {
     const current = filteredCards[currentIndex];
     els.progress.innerText = `${currentIndex + 1} / ${allCards.length}`;
 
-    els.q.innerText = current.question;
+    els.q.innerText = formatQuestion(current.question);
     els.qEdit.value = current.question;
 
     let html = `
         <div class="bubble left">
-            <div class="bubble-text">${current.question}</div>
+            <div class="bubble-text">${formatQuestion(current.question)}</div>
             <div class="bubble-actions">
                 <button onclick="copyToClipboard(\`${current.question.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" title="Copy"><i class="far fa-copy"></i></button>
             </div>

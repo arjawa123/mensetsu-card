@@ -308,6 +308,8 @@ body.light-mode .face {
     font-size: 22px;
     font-weight: 700;
     line-height: 1.5;
+    white-space: pre-wrap;
+    text-align: center;
 }
 
 .card-hint {

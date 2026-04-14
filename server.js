@@ -5,11 +5,53 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+const fs = require('fs');
+const crypto = require('crypto');
+
 const JWT_SECRET = 'mensetsu-secret-key-123';
 
 const app = express();
 app.use(express.json());
-app.use(express.static('public'));
+
+// Hash file untuk cache busting
+function fileHash(filePath) {
+    try {
+        const content = fs.readFileSync(filePath);
+        return crypto.createHash('md5').update(content).digest('hex').slice(0, 8);
+    } catch {
+        return Date.now().toString(36);
+    }
+}
+
+// Sajikan static files dengan cache 1 tahun (browser cache baik)
+// Tapi index.html SELALU no-cache agar hash terbaru selalu dikirim
+app.use(express.static(path.join(__dirname, 'public'), {
+    etag: true,
+    maxAge: '1y',
+    setHeaders(res, filePath) {
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        }
+    }
+}));
+
+// Sajikan index.html dengan cache-busting otomatis pada CSS & JS
+app.get(['/', '/index.html'], (req, res) => {
+    const htmlPath = path.join(__dirname, 'public', 'index.html');
+    let html = fs.readFileSync(htmlPath, 'utf8');
+
+    const cssHash = fileHash(path.join(__dirname, 'public', 'style.css'));
+    const jsHash = fileHash(path.join(__dirname, 'public', 'app.js'));
+
+    html = html
+        .replace('href="style.css"', `href="style.css?v=${cssHash}"`)
+        .replace('src="app.js"', `src="app.js?v=${jsHash}"`);
+
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+});
+
 
 // Auth middleware
 const auth = (req, res, next) => {
