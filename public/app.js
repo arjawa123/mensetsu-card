@@ -43,6 +43,7 @@ const els = {
     fuClose: document.getElementById('followup-close-btn'),
     fuTitle: document.getElementById('followup-modal-title'),
     fuLabel: document.getElementById('followup-label'),
+    addTipsBtn: document.getElementById('add-tips-btn'),
     // Card Management
     cardsList: document.getElementById('cards-list'),
     statTotal: document.getElementById('stat-total'),
@@ -224,13 +225,25 @@ function renderReview() {
 }
 
 function toggleEditVisibility(editing) {
+    const current = filteredCards[currentIndex % filteredCards.length];
+    const hasTips = current && current.tips && current.tips.trim().length > 0;
+
     if (editing) {
         els.q.classList.add('hidden');
         els.qEdit.classList.remove('hidden');
         els.chatBubbles.classList.remove('hidden');
-        els.tipsContainer.classList.remove('hidden');
-        els.tDisplay.classList.add('hidden');
-        els.tEdit.classList.remove('hidden');
+
+        // Hanya tampilkan textarea tips jika ada isinya
+        if (hasTips) {
+            els.tipsContainer.classList.remove('hidden');
+            els.tDisplay.classList.add('hidden');
+            els.tEdit.classList.remove('hidden');
+            els.addTipsBtn.classList.add('hidden');
+        } else {
+            els.tipsContainer.classList.add('hidden');
+            els.addTipsBtn.classList.remove('hidden');
+        }
+
         document.querySelector('.follow-up-actions').classList.add('hidden');
         document.getElementById('card').classList.add('editing');
         renderReviewForEdit();
@@ -238,11 +251,12 @@ function toggleEditVisibility(editing) {
         els.q.classList.remove('hidden');
         els.qEdit.classList.add('hidden');
         els.chatBubbles.classList.remove('hidden');
-        const current = filteredCards[currentIndex % filteredCards.length];
-        const hasTips = current && current.tips && current.tips.trim().length > 0;
+
         els.tipsContainer.classList.toggle('hidden', !hasTips);
-        els.tDisplay.classList.remove('hidden');
+        els.tDisplay.classList.toggle('hidden', !hasTips);
         els.tEdit.classList.add('hidden');
+        els.addTipsBtn.classList.add('hidden');
+
         document.querySelector('.follow-up-actions').classList.remove('hidden');
         document.getElementById('card').classList.remove('editing');
         renderReviewAfterSave();
@@ -261,7 +275,17 @@ function renderReviewForEdit() {
         });
     }
     els.chatBubbles.innerHTML = html;
-    document.getElementById('a-inline-edit').focus();
+
+    const textarea = document.getElementById('a-inline-edit');
+    if (textarea) {
+        const adjustHeight = () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        };
+        textarea.addEventListener('input', adjustHeight);
+        adjustHeight(); // Initial adjust
+        textarea.focus();
+    }
 }
 
 function renderReviewAfterSave() {
@@ -495,6 +519,15 @@ document.getElementById('reset-btn').onclick = async () => {
 document.getElementById('logout-btn').onclick = () => {
     localStorage.removeItem('token');
     window.location.href = '/login.html';
+};
+
+els.addTipsBtn.onclick = (e) => {
+    e.stopPropagation();
+    els.tipsContainer.classList.remove('hidden');
+    els.tDisplay.classList.add('hidden');
+    els.tEdit.classList.remove('hidden');
+    els.addTipsBtn.classList.add('hidden');
+    els.tEdit.focus();
 };
 
 init();
