@@ -71,12 +71,17 @@
             <!-- JIKOSHOUKAI TAB -->
             <div id="view-jikoshoukai" class="view">
                 <div class="view-header">
-                    <h1>自己紹介</h1>
-                    <p>Self Introduction</p>
+                    <div class="header-with-action">
+                        <div>
+                            <h1>自己紹介</h1>
+                            <p>Self Introduction</p>
+                        </div>
+                        <button id="edit-jikoshoukai-btn" class="icon-btn primary-btn"><i class="fas fa-edit"></i></button>
+                    </div>
                 </div>
                 <div class="editor-container">
-                    <textarea id="jikoshoukai-editor" placeholder="Tulis jikoshoukai anda di sini..."></textarea>
-                    <div class="save-status"><i class="fas fa-cloud-upload-alt"></i> Auto-saving...</div>
+                    <textarea id="jikoshoukai-editor" placeholder="Tulis jikoshoukai anda di sini..." readonly></textarea>
+                    <div id="jikoshoukai-status" class="save-status hidden"><i class="fas fa-cloud-upload-alt"></i> Auto-saving...</div>
                 </div>
             </div>
 
@@ -100,6 +105,10 @@
                     </div>
                 </div>
                 <div class="management-actions">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="card-search" placeholder="Cari pertanyaan atau jawaban...">
+                    </div>
                     <button id="add-card-btn" class="btn-primary-wide"><i class="fas fa-plus"></i> Add New Card</button>
                 </div>
                 <div id="cards-list" class="cards-management-list"></div>

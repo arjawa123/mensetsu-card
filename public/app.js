@@ -2,6 +2,7 @@ let allCards = [];
 let filteredCards = [];
 let currentIndex = 0;
 let isEditingCard = false;
+let isEditingJikoshoukai = false;
 
 const els = {
     progress: document.getElementById('progress-text'),
@@ -14,6 +15,8 @@ const els = {
     editBtn: document.getElementById('edit-card-btn'),
     editBtnFront: document.getElementById('edit-card-btn-front'),
     jikoshoukai: document.getElementById('jikoshoukai-editor'),
+    jikoshoukaiBtn: document.getElementById('edit-jikoshoukai-btn'),
+    jikoshoukaiStatus: document.getElementById('jikoshoukai-status'),
     chatBubbles: document.getElementById('chat-bubbles'),
     addFollowQ: document.getElementById('add-follow-q'),
     addFollowA: document.getElementById('add-follow-a'),
@@ -30,6 +33,7 @@ const els = {
     statHafal: document.getElementById('stat-hafal'),
     statFu: document.getElementById('stat-fu'),
     addCardBtn: document.getElementById('add-card-btn'),
+    cardSearch: document.getElementById('card-search'),
     addCardModal: document.getElementById('add-card-modal'),
     newQ: document.getElementById('new-q'),
     newA: document.getElementById('new-a'),
@@ -63,6 +67,8 @@ document.querySelectorAll('.tab-item').forEach(btn => {
 });
 
 // --- CARD MANAGEMENT ---
+els.cardSearch.oninput = () => renderManagementList();
+
 async function refreshStats() {
     const res = await fetch('/api/stats');
     const stats = await res.json();
@@ -72,7 +78,13 @@ async function refreshStats() {
 }
 
 function renderManagementList() {
-    els.cardsList.innerHTML = allCards.map(c => `
+    const query = els.cardSearch.value.toLowerCase();
+    const filtered = allCards.filter(c => 
+        c.question.toLowerCase().includes(query) || 
+        c.answer.toLowerCase().includes(query)
+    );
+
+    els.cardsList.innerHTML = filtered.map(c => `
         <div class="m-card">
             <div class="m-card-info">
                 <h3>${c.question}</h3>
@@ -161,7 +173,13 @@ function renderReview() {
     els.qEdit.value = current.question;
     
     let html = `<div class="bubble left">${current.question}</div>`;
-    html += `<div class="bubble right">${current.answer}</div>`;
+    
+    // Primary answer bubble with edit capability
+    if (isEditingCard) {
+        html += `<div class="bubble right"><textarea id="a-inline-edit" class="bubble-edit">${current.answer}</textarea></div>`;
+    } else {
+        html += `<div class="bubble right">${current.answer}</div>`;
+    }
     
     if (current.followUps && current.followUps.length > 0) {
         current.followUps.forEach(f => {
@@ -179,7 +197,6 @@ function renderReview() {
     els.tipsContainer.classList.toggle('hidden', !hasTips && !isEditingCard);
     els.tDisplay.innerText = current.tips || "No tips added.";
     
-    els.aEdit.value = current.answer;
     els.tEdit.value = current.tips || "";
     
     els.card.classList.remove('flipped');
@@ -189,26 +206,56 @@ function toggleEditVisibility(editing) {
     if (editing) {
         els.q.classList.add('hidden');
         els.qEdit.classList.remove('hidden');
-        els.chatBubbles.classList.remove('hidden');
-        els.aEdit.classList.remove('hidden'); 
         els.tipsContainer.classList.remove('hidden');
         els.tDisplay.classList.add('hidden');
         els.tEdit.classList.remove('hidden');
         document.querySelector('.follow-up-actions').classList.add('hidden');
         document.getElementById('card').classList.add('editing');
+        // Refresh bubbles to show textarea
+        renderReviewForEdit();
     } else {
         els.q.classList.remove('hidden');
         els.qEdit.classList.add('hidden');
-        els.chatBubbles.classList.remove('hidden');
         const current = filteredCards[currentIndex % filteredCards.length];
         const hasTips = current && current.tips && current.tips.trim().length > 0;
         els.tipsContainer.classList.toggle('hidden', !hasTips);
         els.tDisplay.classList.remove('hidden');
         els.tEdit.classList.add('hidden');
-        els.aEdit.classList.add('hidden');
         document.querySelector('.follow-up-actions').classList.remove('hidden');
         document.getElementById('card').classList.remove('editing');
+        // Refresh bubbles to remove textarea
+        renderReviewAfterSave();
     }
+}
+
+// Special renderers to avoid full reset
+function renderReviewForEdit() {
+    const current = filteredCards[currentIndex % filteredCards.length];
+    let html = `<div class="bubble left">${current.question}</div>`;
+    html += `<div class="bubble right"><textarea id="a-inline-edit" class="bubble-edit">${current.answer}</textarea></div>`;
+    
+    if (current.followUps && current.followUps.length > 0) {
+        current.followUps.forEach(f => {
+            const side = f.type === 'q' ? 'left' : 'right';
+            html += `<div class="bubble ${side}">${f.content}<button class="del-bubble" onclick="deleteFollowUp(event, ${f.id})"><i class="fas fa-times"></i></button></div>`;
+        });
+    }
+    els.chatBubbles.innerHTML = html;
+    document.getElementById('a-inline-edit').focus();
+}
+
+function renderReviewAfterSave() {
+    const current = filteredCards[currentIndex % filteredCards.length];
+    let html = `<div class="bubble left">${current.question}</div>`;
+    html += `<div class="bubble right">${current.answer}</div>`;
+    
+    if (current.followUps && current.followUps.length > 0) {
+        current.followUps.forEach(f => {
+            const side = f.type === 'q' ? 'left' : 'right';
+            html += `<div class="bubble ${side}">${f.content}<button class="del-bubble" onclick="deleteFollowUp(event, ${f.id})"><i class="fas fa-times"></i></button></div>`;
+        });
+    }
+    els.chatBubbles.innerHTML = html;
 }
 
 let currentFuType = 'q';
@@ -269,9 +316,7 @@ async function toggleEditMode(e) {
             btn.innerHTML = '<i class="fas fa-save"></i>';
         });
         toggleEditVisibility(true);
-        if (wasFlipped) {
-            els.aEdit.focus();
-        } else {
+        if (!wasFlipped) {
             els.qEdit.focus();
         }
     } else {
@@ -279,8 +324,8 @@ async function toggleEditMode(e) {
             btn.classList.remove('editing');
             btn.innerHTML = '<i class="fas fa-edit"></i>';
         });
-        toggleEditVisibility(false);
         await saveCardChanges();
+        toggleEditVisibility(false);
         if (wasFlipped) els.card.classList.add('flipped');
     }
 }
@@ -322,9 +367,10 @@ async function deleteCard() {
 
 async function saveCardChanges() {
     const current = filteredCards[currentIndex % filteredCards.length];
+    const inlineEdit = document.getElementById('a-inline-edit');
     const body = { 
         question: els.qEdit.value,
-        answer: els.aEdit.value, 
+        answer: inlineEdit ? inlineEdit.value : current.answer, 
         tips: els.tEdit.value 
     };
     
@@ -340,28 +386,48 @@ async function saveCardChanges() {
     
     const original = allCards.find(c => c.id === current.id);
     if (original) {
-        original.question = body.question;
-        original.answer = body.answer;
-        original.tips = body.tips;
+        Object.assign(original, body);
     }
-    
-    const wasFlipped = els.card.classList.contains('flipped');
-    renderReview();
-    if (wasFlipped) els.card.classList.add('flipped');
 }
 
-let saveTimeout;
-els.jikoshoukai.oninput = () => {
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(async () => {
+// --- JIKOSHOUKAI ---
+els.jikoshoukaiBtn.onclick = async () => {
+    isEditingJikoshoukai = !isEditingJikoshoukai;
+    if (isEditingJikoshoukai) {
+        els.jikoshoukai.readOnly = false;
+        els.jikoshoukaiBtn.innerHTML = '<i class="fas fa-save"></i>';
+        els.jikoshoukaiBtn.classList.add('editing');
+        els.jikoshoukai.focus();
+    } else {
+        els.jikoshoukai.readOnly = true;
+        els.jikoshoukaiBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        els.jikoshoukaiBtn.classList.remove('editing');
+        // Final save
         await fetch('/api/jikoshoukai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: els.jikoshoukai.value })
         });
-    }, 1000);
+    }
 };
 
+let saveTimeout;
+els.jikoshoukai.oninput = () => {
+    if (isEditingJikoshoukai) {
+        els.jikoshoukaiStatus.classList.remove('hidden');
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(async () => {
+            await fetch('/api/jikoshoukai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: els.jikoshoukai.value })
+            });
+            els.jikoshoukaiStatus.classList.add('hidden');
+        }, 1000);
+    }
+};
+
+// --- EVENT LISTENERS ---
 document.getElementById('card').onclick = (e) => {
     if (!['TEXTAREA', 'BUTTON', 'I'].includes(e.target.tagName) && !e.target.classList.contains('del-bubble')) {
         els.card.classList.toggle('flipped');

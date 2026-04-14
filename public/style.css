@@ -230,7 +230,23 @@ body {
 .stat-value { display: block; font-size: 20px; font-weight: 800; color: var(--primary); }
 .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-top: 5px; }
 
-.management-actions { padding: 15px 20px; }
+.management-actions { padding: 10px 20px; display: flex; flex-direction: column; gap: 10px; }
+.search-box { background: var(--surface); border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.05); }
+.search-box i { color: var(--text-muted); font-size: 14px; }
+.search-box input { background: transparent; border: none; color: white; flex: 1; font-size: 15px; }
+
+.header-with-action { display: flex; justify-content: space-between; align-items: flex-start; }
+
+#jikoshoukai-editor[readonly] { background: transparent; padding-left: 0; padding-right: 0; }
+#jikoshoukai-editor:not([readonly]) { background: rgba(0,0,0,0.2); border: 1px dashed var(--primary); }
+
+.bubble-edit {
+    width: 100%; background: transparent; border: none; color: white;
+    font-size: 15px; line-height: 1.4; resize: none; min-height: 60px; padding: 0;
+    font-family: inherit;
+}
+.bubble.right textarea { color: white; }
+
 .btn-primary-wide { width: 100%; background: var(--primary); color: var(--bg); border: none; border-radius: 15px; padding: 15px; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 15px -3px rgba(56, 189, 248, 0.2); }
 
 .cards-management-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; display: flex; flex-direction: column; gap: 10px; }
