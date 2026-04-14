@@ -265,6 +265,11 @@ function renderReviewForEdit() {
 
 function renderReviewAfterSave() {
     const current = filteredCards[currentIndex % filteredCards.length];
+
+    // Sinkronkan text di bagian depan dan tab display
+    els.q.innerText = current.question;
+    els.tDisplay.innerText = current.tips || "No tips added.";
+
     let html = `<div class="bubble left">${current.question}</div>`;
     html += `<div class="bubble right">${current.answer}</div>`;
 
