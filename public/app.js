@@ -42,6 +42,7 @@ const els = {
     fuSave: document.getElementById('followup-save-btn'),
     fuClose: document.getElementById('followup-close-btn'),
     fuTitle: document.getElementById('followup-modal-title'),
+    fuLabel: document.getElementById('followup-label'),
     // Card Management
     cardsList: document.getElementById('cards-list'),
     statTotal: document.getElementById('stat-total'),
@@ -285,7 +286,13 @@ function renderReviewAfterSave() {
 let currentFuType = 'q';
 function openFollowUpModal(type) {
     currentFuType = type;
-    els.fuTitle.innerText = type === 'q' ? "Add Follow-up Question" : "Add Follow-up Answer";
+    if (type === 'q') {
+        els.fuTitle.innerText = "Add Follow-up Question";
+        els.fuLabel.innerText = "Question";
+    } else {
+        els.fuTitle.innerText = "Add Follow-up Answer";
+        els.fuLabel.innerText = "Answer";
+    }
     els.fuInput.value = "";
     els.fuModal.style.display = "block";
     els.fuInput.focus();
