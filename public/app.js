@@ -16,8 +16,25 @@ window.fetch = async function (url, options = {}) {
 let allCards = [];
 let filteredCards = [];
 let currentIndex = 0;
-let isEditingCard = false;
+let isEditingCardBack = false;
+let isEditingCardFront = false;
 let isEditingJikoshoukai = false;
+
+// Persist session state across page refreshes
+const savedBelum = JSON.parse(localStorage.getItem('sessionBelumIds') || '[]');
+let sessionBelumIds = new Set(savedBelum);
+
+function saveSession() {
+    localStorage.setItem('sessionBelumIds', JSON.stringify([...sessionBelumIds]));
+    localStorage.setItem('sessionCurrentIndex', currentIndex);
+}
+
+function clearSession() {
+    sessionBelumIds.clear();
+    currentIndex = 0;
+    localStorage.removeItem('sessionBelumIds');
+    localStorage.removeItem('sessionCurrentIndex');
+}
 
 const els = {
     progress: document.getElementById('progress-text'),
@@ -27,6 +44,20 @@ const els = {
     aEdit: document.getElementById('a-content'),
     tEdit: document.getElementById('t-content'),
     card: document.getElementById('card'),
+    cardStage: document.getElementById('card-stage'),
+    resultScreen: document.getElementById('result-screen'),
+    hafalBadge: document.getElementById('hafal-count'),
+    belumBadge: document.getElementById('belum-count'),
+    finalHafal: document.getElementById('final-hafal'),
+    finalBelum: document.getElementById('final-belum'),
+    unlearnedCount: document.getElementById('unlearned-count'),
+    studyUnlearnedBtn: document.getElementById('study-unlearned-btn'),
+    restartProgressBtn: document.getElementById('restart-progress-btn'),
+    alertModal: document.getElementById('custom-alert'),
+    alertTitle: document.getElementById('alert-title'),
+    alertMsg: document.getElementById('alert-message'),
+    alertOk: document.getElementById('alert-ok'),
+    alertCancel: document.getElementById('alert-cancel'),
     editBtn: document.getElementById('edit-card-btn'),
     editBtnFront: document.getElementById('edit-card-btn-front'),
     jikoshoukai: document.getElementById('jikoshoukai-editor'),
@@ -44,6 +75,7 @@ const els = {
     fuTitle: document.getElementById('followup-modal-title'),
     fuLabel: document.getElementById('followup-label'),
     addTipsBtn: document.getElementById('add-tips-btn'),
+    tipEditBtn: document.getElementById('tip-edit-btn'),
     // Card Management
     cardsList: document.getElementById('cards-list'),
     statTotal: document.getElementById('stat-total'),
@@ -72,7 +104,17 @@ async function init() {
     allCards = data.cards;
     els.jikoshoukai.value = data.jikoshoukai || "";
 
+    // Restore session index if exists
+    const savedIndex = parseInt(localStorage.getItem('sessionCurrentIndex') || '0');
+
     applyFilters();
+
+    // Setelah filteredCards terisi, restore currentIndex jika masih valid
+    if (savedIndex > 0 && savedIndex < filteredCards.length) {
+        currentIndex = savedIndex;
+        renderReview();
+    }
+
     refreshStats();
 }
 
@@ -133,7 +175,7 @@ function editFromList(id) {
 }
 
 async function deleteFromList(id) {
-    if (!confirm("Hapus kartu ini selamanya?")) return;
+    if (!await showModal("Hapus kartu ini selamanya?", "Konfirmasi", true)) return;
     await fetch(`/api/cards/${id}`, { method: 'DELETE' });
     allCards = allCards.filter(c => c.id !== id);
     applyFilters();
@@ -152,7 +194,7 @@ els.addModalClose.onclick = () => els.addCardModal.style.display = "none";
 
 els.addModalSave.onclick = async () => {
     const body = { question: els.newQ.value, answer: els.newA.value, tips: els.newT.value };
-    if (!body.question || !body.answer) return alert("Question and Answer are required.");
+    if (!body.question || !body.answer) return showModal("Mohon isi pertanyaan dan jawaban.", "Peringatan");
 
     await fetch('/api/cards', {
         method: 'POST',
@@ -164,44 +206,106 @@ els.addModalSave.onclick = async () => {
     init();
 };
 
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Optional: toast notification would be good here
+        console.log('Copied');
+    });
+}
+
 // --- REVIEW LOGIC ---
+async function showModal(msg, title = "Notification", showCancel = false) {
+    els.alertTitle.innerText = title;
+    els.alertMsg.innerText = msg;
+    els.alertModal.style.display = "block";
+    els.alertCancel.classList.toggle('hidden', !showCancel);
+
+    return new Promise((resolve) => {
+        els.alertOk.onclick = () => {
+            els.alertModal.style.display = "none";
+            resolve(true);
+        };
+        els.alertCancel.onclick = () => {
+            els.alertModal.style.display = "none";
+            resolve(false);
+        };
+    });
+}
+
 function applyFilters() {
     filteredCards = allCards.filter(c => c.status === 0);
-    if (filteredCards.length === 0) filteredCards = [...allCards];
     currentIndex = 0;
-    renderReview();
+    // Note: jangan clear sessionBelumIds di sini agar counter persist saat refresh
+    if (filteredCards.length === 0 && allCards.length > 0) {
+        showResultScreen();
+    } else {
+        renderReview();
+    }
 }
 
 function renderReview() {
-    isEditingCard = false;
-    [els.editBtn, els.editBtnFront].forEach(btn => {
-        btn.classList.remove('editing');
-        btn.innerHTML = '<i class="fas fa-edit"></i>';
-    });
+    isEditingCardBack = false;
+    isEditingCardFront = false;
+
+    // Reset buttons
+    els.editBtn.classList.remove('editing');
+    els.editBtn.classList.add('hidden'); // Selalu sembunyi di mode baca
+    els.editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+    els.editBtnFront.classList.remove('editing', 'hidden');
+    els.editBtnFront.innerHTML = '<i class="fas fa-edit"></i>';
+
     toggleEditVisibility(false);
 
-    const total = filteredCards.length;
-    const hafal = allCards.filter(c => c.status === 1).length;
-    els.hafalBadge.innerText = hafal;
+    const totalReview = filteredCards.length;
+    const hafalTotalCount = allCards.filter(c => c.status === 1).length;
+    const belumSessionCount = sessionBelumIds.size;
 
-    if (total === 0) {
-        els.q.innerText = "No data loaded.";
-        els.progress.innerText = "0 / 0";
+    els.hafalBadge.innerText = hafalTotalCount;
+    els.belumBadge.innerText = belumSessionCount;
+
+    // Pastikan currentIndex tidak melebihi batas
+    if (currentIndex >= totalReview && totalReview > 0) {
+        showResultScreen();
         return;
     }
 
-    const current = filteredCards[currentIndex % total];
-    els.progress.innerText = `${(currentIndex % total) + 1} / ${total}`;
+    if (totalReview === 0) {
+        showResultScreen();
+        return;
+    }
+
+    els.resultScreen.classList.add('hidden');
+    els.cardStage.classList.remove('hidden');
+    document.querySelector('.status-actions-nav').classList.remove('hidden');
+
+    const current = filteredCards[currentIndex];
+    els.progress.innerText = `${currentIndex + 1} / ${allCards.length}`;
 
     els.q.innerText = current.question;
     els.qEdit.value = current.question;
 
-    let html = `<div class="bubble left">${current.question}</div>`;
+    let html = `
+        <div class="bubble left">
+            <div class="bubble-text">${current.question}</div>
+            <div class="bubble-actions">
+                <button onclick="copyToClipboard(\`${current.question.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" title="Copy"><i class="far fa-copy"></i></button>
+            </div>
+        </div>`;
 
-    if (isEditingCard) {
-        html += `<div class="bubble right"><textarea id="a-inline-edit" class="bubble-edit" spellcheck="false">${current.answer}</textarea></div>`;
+    if (isEditingCardBack) {
+        html += `
+            <div class="bubble right editing-focus">
+                <textarea id="a-inline-edit" class="bubble-edit" spellcheck="false">${current.answer}</textarea>
+            </div>`;
     } else {
-        html += `<div class="bubble right">${current.answer}</div>`;
+        html += `
+            <div class="bubble right">
+                <div class="bubble-text">${current.answer}</div>
+                <div class="bubble-actions">
+                    <button onclick="copyToClipboard(\`${current.answer.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" title="Copy"><i class="far fa-copy"></i></button>
+                    <button onclick="toggleEditMode(event, 'main')" title="Edit"><i class="fas fa-pencil-alt"></i></button>
+                </div>
+            </div>`;
     }
 
     if (current.followUps && current.followUps.length > 0) {
@@ -209,7 +313,11 @@ function renderReview() {
             const side = f.type === 'q' ? 'left' : 'right';
             html += `
                 <div class="bubble ${side}">
-                    ${f.content}
+                    <div class="bubble-text">${f.content}</div>
+                    <div class="bubble-actions">
+                        <button onclick="copyToClipboard(\`${f.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" title="Copy"><i class="far fa-copy"></i></button>
+                        <button onclick="toggleEditMode(event, ${f.id})" title="Edit"><i class="fas fa-pencil-alt"></i></button>
+                    </div>
                     <button class="del-bubble" onclick="deleteFollowUp(event, ${f.id})"><i class="fas fa-times"></i></button>
                 </div>`;
         });
@@ -217,7 +325,7 @@ function renderReview() {
     els.chatBubbles.innerHTML = html;
 
     const hasTips = current.tips && current.tips.trim().length > 0;
-    els.tipsContainer.classList.toggle('hidden', !hasTips && !isEditingCard);
+    els.tipsContainer.classList.toggle('hidden', !hasTips);
     els.tDisplay.innerText = current.tips || "No tips added.";
     els.tEdit.value = current.tips || "";
 
@@ -227,35 +335,47 @@ function renderReview() {
 function toggleEditVisibility(editing) {
     const current = filteredCards[currentIndex % filteredCards.length];
     const hasTips = current && current.tips && current.tips.trim().length > 0;
+    const isFlipped = els.card.classList.contains('flipped');
 
     if (editing) {
-        els.q.classList.add('hidden');
-        els.qEdit.classList.remove('hidden');
-        els.chatBubbles.classList.remove('hidden');
-
-        // Hanya tampilkan textarea tips jika ada isinya
-        if (hasTips) {
-            els.tipsContainer.classList.remove('hidden');
-            els.tDisplay.classList.add('hidden');
-            els.tEdit.classList.remove('hidden');
-            els.addTipsBtn.classList.add('hidden');
+        if (!isFlipped) {
+            // FRONT EDIT MODE
+            els.q.classList.add('hidden');
+            els.qEdit.classList.remove('hidden');
         } else {
-            els.tipsContainer.classList.add('hidden');
-            els.addTipsBtn.classList.remove('hidden');
-        }
+            // BACK EDIT MODE
+            els.chatBubbles.classList.add('editing-active'); // Utility class to hide elements if needed
 
-        document.querySelector('.follow-up-actions').classList.add('hidden');
+            // Hide tip edit pencil when editing full card
+            els.tipEditBtn.classList.add('hidden');
+            // Hide add tips button during edit
+            els.addTipsBtn.classList.add('hidden');
+
+            if (editing === 'tips') {
+                els.tipsContainer.classList.remove('hidden');
+                els.tDisplay.classList.add('hidden');
+                els.tEdit.classList.remove('hidden');
+            } else {
+                els.tipsContainer.classList.add('hidden');
+            }
+
+            document.querySelector('.follow-up-actions').classList.add('hidden');
+            renderReviewForEdit(editing);
+        }
         document.getElementById('card').classList.add('editing');
-        renderReviewForEdit();
     } else {
+        // READ MODE
         els.q.classList.remove('hidden');
         els.qEdit.classList.add('hidden');
-        els.chatBubbles.classList.remove('hidden');
 
         els.tipsContainer.classList.toggle('hidden', !hasTips);
         els.tDisplay.classList.toggle('hidden', !hasTips);
         els.tEdit.classList.add('hidden');
-        els.addTipsBtn.classList.add('hidden');
+
+        // Mode baca: sembunyikan jika ada data, tampilkan jika kosong
+        els.addTipsBtn.classList.toggle('hidden', hasTips);
+
+        els.tipEditBtn.classList.toggle('hidden', !hasTips);
 
         document.querySelector('.follow-up-actions').classList.remove('hidden');
         document.getElementById('card').classList.remove('editing');
@@ -263,29 +383,62 @@ function toggleEditVisibility(editing) {
     }
 }
 
-function renderReviewForEdit() {
+function renderReviewForEdit(targetId = null) {
     const current = filteredCards[currentIndex % filteredCards.length];
-    let html = `<div class="bubble left">${current.question}</div>`;
-    html += `<div class="bubble right"><textarea id="a-inline-edit" class="bubble-edit" spellcheck="false">${current.answer}</textarea></div>`;
+    let html = `
+        <div class="bubble left">
+            <div class="bubble-text">${current.question}</div>
+            <div class="bubble-actions">
+                <button onclick="copyToClipboard(\`${current.question.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" title="Copy"><i class="far fa-copy"></i></button>
+            </div>
+        </div>`;
+
+    const isMainFocus = targetId === 'main';
+    html += `
+        <div class="bubble right ${isMainFocus ? 'editing-focus' : ''}">
+            <textarea id="a-inline-edit" class="bubble-edit" spellcheck="false" onfocus="highlightBubble(this)">${current.answer}</textarea>
+        </div>`;
 
     if (current.followUps && current.followUps.length > 0) {
         current.followUps.forEach(f => {
             const side = f.type === 'q' ? 'left' : 'right';
-            html += `<div class="bubble ${side}">${f.content}<button class="del-bubble" onclick="deleteFollowUp(event, ${f.id})"><i class="fas fa-times"></i></button></div>`;
+            const isTarget = targetId == f.id;
+            html += `
+                <div class="bubble ${side} ${isTarget ? 'editing-focus' : ''}">
+                    <textarea class="bubble-edit follow-up-edit" data-id="${f.id}" spellcheck="false" onfocus="highlightBubble(this)">${f.content}</textarea>
+                    <button class="del-bubble" onclick="deleteFollowUp(event, ${f.id})"><i class="fas fa-times"></i></button>
+                </div>`;
         });
     }
     els.chatBubbles.innerHTML = html;
 
-    const textarea = document.getElementById('a-inline-edit');
-    if (textarea) {
+    // Auto resize untuk semua textarea edit (main + followups)
+    const textareas = els.chatBubbles.querySelectorAll('.bubble-edit');
+    textareas.forEach(textarea => {
         const adjustHeight = () => {
             textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
+            textarea.style.height = (textarea.scrollHeight + 2) + 'px';
         };
         textarea.addEventListener('input', adjustHeight);
-        adjustHeight(); // Initial adjust
-        textarea.focus();
+        adjustHeight();
+    });
+
+    // Focus target
+    if (targetId && targetId !== true) {
+        if (targetId === 'main') {
+            document.getElementById('a-inline-edit').focus();
+        } else if (targetId === 'tips') {
+            els.tEdit.focus();
+        } else {
+            const target = els.chatBubbles.querySelector(`textarea[data-id="${targetId}"]`);
+            if (target) target.focus();
+        }
     }
+}
+
+function highlightBubble(el) {
+    els.chatBubbles.querySelectorAll('.bubble').forEach(b => b.classList.remove('editing-focus'));
+    el.closest('.bubble').classList.add('editing-focus');
 }
 
 function renderReviewAfterSave() {
@@ -295,13 +448,34 @@ function renderReviewAfterSave() {
     els.q.innerText = current.question;
     els.tDisplay.innerText = current.tips || "No tips added.";
 
-    let html = `<div class="bubble left">${current.question}</div>`;
-    html += `<div class="bubble right">${current.answer}</div>`;
+    let html = `
+        <div class="bubble left">
+            <div class="bubble-text">${current.question}</div>
+            <div class="bubble-actions">
+                <button onclick="copyToClipboard(\`${current.question.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" title="Copy"><i class="far fa-copy"></i></button>
+            </div>
+        </div>`;
+    html += `
+        <div class="bubble right">
+            <div class="bubble-text">${current.answer}</div>
+            <div class="bubble-actions">
+                <button onclick="copyToClipboard(\`${current.answer.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" title="Copy"><i class="far fa-copy"></i></button>
+                <button onclick="toggleEditMode(event, 'main')" title="Edit"><i class="fas fa-pencil-alt"></i></button>
+            </div>
+        </div>`;
 
     if (current.followUps && current.followUps.length > 0) {
         current.followUps.forEach(f => {
             const side = f.type === 'q' ? 'left' : 'right';
-            html += `<div class="bubble ${side}">${f.content}<button class="del-bubble" onclick="deleteFollowUp(event, ${f.id})"><i class="fas fa-times"></i></button></div>`;
+            html += `
+                <div class="bubble ${side}">
+                    <div class="bubble-text">${f.content}</div>
+                    <div class="bubble-actions">
+                        <button onclick="copyToClipboard(\`${f.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" title="Copy"><i class="far fa-copy"></i></button>
+                        <button onclick="toggleEditMode(event, ${f.id})" title="Edit"><i class="fas fa-pencil-alt"></i></button>
+                    </div>
+                    <button class="del-bubble" onclick="deleteFollowUp(event, ${f.id})"><i class="fas fa-times"></i></button>
+                </div>`;
         });
     }
     els.chatBubbles.innerHTML = html;
@@ -339,7 +513,7 @@ async function saveFollowUp() {
 
 async function deleteFollowUp(e, id) {
     e.stopPropagation();
-    if (!confirm("Hapus follow-up ini?")) return;
+    if (!await showModal("Hapus follow-up ini?", "Konfirmasi", true)) return;
     await fetch(`/api/follow-ups/${id}`, { method: 'DELETE' });
     const current = filteredCards[currentIndex % filteredCards.length];
     await refreshCards(current.id);
@@ -360,28 +534,42 @@ async function refreshCards(currentId) {
     if (wasFlipped) els.card.classList.add('flipped');
 }
 
-async function toggleEditMode(e) {
+async function toggleEditMode(e, targetId = null) {
     if (e) e.stopPropagation();
-    const wasFlipped = els.card.classList.contains('flipped');
-    isEditingCard = !isEditingCard;
+    const isFlipped = els.card.classList.contains('flipped');
 
-    if (isEditingCard) {
-        [els.editBtn, els.editBtnFront].forEach(btn => {
-            btn.classList.add('editing');
-            btn.innerHTML = '<i class="fas fa-save"></i>';
-        });
-        toggleEditVisibility(true);
-        if (!wasFlipped) {
+    if (!isFlipped) {
+        // FRONT EDIT
+        isEditingCardFront = !isEditingCardFront;
+        if (isEditingCardFront) {
+            els.editBtnFront.classList.add('editing');
+            els.editBtnFront.innerHTML = '<i class="fas fa-save"></i>';
+            toggleEditVisibility(true);
             els.qEdit.focus();
+        } else {
+            els.editBtnFront.classList.remove('editing');
+            els.editBtnFront.innerHTML = '<i class="fas fa-edit"></i>';
+            await saveCardChanges();
+            toggleEditVisibility(false);
         }
     } else {
-        [els.editBtn, els.editBtnFront].forEach(btn => {
-            btn.classList.remove('editing');
-            btn.innerHTML = '<i class="fas fa-edit"></i>';
-        });
-        await saveCardChanges();
-        toggleEditVisibility(false);
-        if (wasFlipped) els.card.classList.add('flipped');
+        // BACK EDIT
+        isEditingCardBack = !isEditingCardBack;
+        if (isEditingCardBack) {
+            els.editBtn.classList.remove('hidden');
+            els.editBtn.classList.add('editing');
+            els.editBtn.innerHTML = '<i class="fas fa-save"></i>';
+            toggleEditVisibility(targetId || true);
+            if (targetId !== 'tips') {
+                renderReviewForEdit(targetId);
+            }
+        } else {
+            els.editBtn.classList.add('hidden');
+            els.editBtn.classList.remove('editing');
+            els.editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            await saveCardChanges();
+            toggleEditVisibility(false);
+        }
     }
 }
 
@@ -397,22 +585,56 @@ async function updateStatus(status) {
     if (original) original.status = status;
 
     if (status === 1) {
-        filteredCards.splice(currentIndex % filteredCards.length, 1);
-        if (filteredCards.length === 0) {
-            allCards.forEach(c => c.status = 0);
-            applyFilters();
-        } else {
-            renderReview();
-        }
-    } else {
         currentIndex++;
+    } else {
+        sessionBelumIds.add(current.id);
+        currentIndex++;
+    }
+
+    saveSession();
+
+    if (currentIndex >= filteredCards.length) {
+        showResultScreen();
+    } else {
         renderReview();
     }
 }
 
+function showResultScreen() {
+    const hafalCount = allCards.filter(c => c.status === 1).length;
+    const belumCount = allCards.filter(c => c.status === 0).length;
+
+    els.cardStage.classList.add('hidden');
+    document.querySelector('.status-actions-nav').classList.add('hidden');
+    els.resultScreen.classList.remove('hidden');
+
+    els.finalHafal.innerText = hafalCount;
+    els.finalBelum.innerText = sessionBelumIds.size;
+    els.unlearnedCount.innerText = belumCount;
+
+    els.progress.innerText = "Review Selesai";
+}
+
+els.restartProgressBtn.onclick = async () => {
+    if (await showModal("Hapus semua progress dan mulai dari awal?", "Konfirmasi", true)) {
+        await fetch('/api/reset', { method: 'POST' });
+        clearSession();
+        location.reload();
+    }
+};
+
+els.studyUnlearnedBtn.onclick = () => {
+    clearSession(); // Reset counter belum dan posisi kartu
+    // Filter hanya kartu yang belum hafal (status 0)
+    filteredCards = allCards.filter(c => c.status === 0);
+    currentIndex = 0;
+    saveSession();
+    renderReview();
+};
+
 async function deleteCard() {
     const current = filteredCards[currentIndex % filteredCards.length];
-    if (!confirm("Hapus kartu ini selamanya?")) return;
+    if (!await showModal("Hapus kartu ini selamanya?", "Konfirmasi", true)) return;
 
     await fetch(`/api/cards/${current.id}`, { method: 'DELETE' });
     allCards = allCards.filter(c => c.id !== current.id);
@@ -423,6 +645,8 @@ async function deleteCard() {
 async function saveCardChanges() {
     const current = filteredCards[currentIndex % filteredCards.length];
     const inlineEdit = document.getElementById('a-inline-edit');
+
+    // Save main card
     const body = {
         question: els.qEdit.value,
         answer: inlineEdit ? inlineEdit.value : current.answer,
@@ -435,13 +659,27 @@ async function saveCardChanges() {
         body: JSON.stringify(body)
     });
 
-    current.question = body.question;
-    current.answer = body.answer;
-    current.tips = body.tips;
+    Object.assign(current, body);
+
+    // Save follow-ups
+    const fuEdits = els.chatBubbles.querySelectorAll('.follow-up-edit');
+    for (const fuel of fuEdits) {
+        const id = fuel.dataset.id;
+        const content = fuel.value.trim();
+        await fetch(`/api/follow-ups/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content })
+        });
+
+        const fObj = current.followUps.find(f => f.id == id);
+        if (fObj) fObj.content = content;
+    }
 
     const original = allCards.find(c => c.id === current.id);
     if (original) {
         Object.assign(original, body);
+        original.followUps = JSON.parse(JSON.stringify(current.followUps));
     }
 }
 
@@ -482,8 +720,12 @@ els.jikoshoukai.oninput = () => {
 };
 
 // --- EVENT LISTENERS ---
-document.getElementById('card').onclick = (e) => {
+document.getElementById('card').onclick = async (e) => {
     if (!['TEXTAREA', 'BUTTON', 'I'].includes(e.target.tagName) && !e.target.classList.contains('del-bubble')) {
+        // Jika sedang mengedit, simpan dulu baru flip
+        if (isEditingCardFront || isEditingCardBack) {
+            await toggleEditMode();
+        }
         els.card.classList.toggle('flipped');
     }
 };
@@ -513,7 +755,11 @@ document.getElementById('shuffle-btn').onclick = () => {
 };
 
 document.getElementById('reset-btn').onclick = async () => {
-    if (confirm("Reset progress?")) { await fetch('/api/reset', { method: 'POST' }); location.reload(); }
+    if (await showModal("Reset semua progress hafalan?\nSemua kartu akan dikembalikan ke status 'Belum Hafal'.", "Konfirmasi", true)) {
+        await fetch('/api/reset', { method: 'POST' });
+        clearSession();
+        location.reload();
+    }
 };
 
 document.getElementById('logout-btn').onclick = () => {
@@ -523,11 +769,12 @@ document.getElementById('logout-btn').onclick = () => {
 
 els.addTipsBtn.onclick = (e) => {
     e.stopPropagation();
-    els.tipsContainer.classList.remove('hidden');
-    els.tDisplay.classList.add('hidden');
-    els.tEdit.classList.remove('hidden');
-    els.addTipsBtn.classList.add('hidden');
-    els.tEdit.focus();
+    toggleEditMode(e, 'tips');
+};
+
+els.tipEditBtn.onclick = (e) => {
+    e.stopPropagation();
+    toggleEditMode(e, 'tips');
 };
 
 init();

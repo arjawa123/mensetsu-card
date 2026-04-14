@@ -179,6 +179,17 @@ app.delete('/api/follow-ups/:id', auth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.put('/api/follow-ups/:id', auth, async (req, res) => {
+    try {
+        const { content } = req.body;
+        const check = await query("SELECT c.id FROM follow_ups f JOIN cards c ON f.card_id = c.id WHERE f.id = ? AND c.user_id = ?", [req.params.id, req.user.user_id]);
+        if (check.length === 0) return res.status(404).json({ error: 'Not found or unauthorized' });
+
+        await run("UPDATE follow_ups SET content = ? WHERE id = ?", [content, req.params.id]);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 const PORT = 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at http://localhost:${PORT}`);

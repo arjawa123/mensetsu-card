@@ -18,22 +18,52 @@
                 <div class="header">
                     <div class="stats">
                         <span id="progress-text">0 / 0</span>
-                        <div class="hafal-badge"><i class="fas fa-check-circle"></i> <span id="hafal-count">0</span>
+                        <div class="stat-badges">
+                            <div class="hafal-badge success-text" title="Hafal"><i class="fas fa-check-circle"></i>
+                                <span id="hafal-count">0</span>
+                            </div>
+                            <div class="hafal-badge danger-text" title="Belum Hafal"><i class="fas fa-times-circle"></i>
+                                <span id="belum-count">0</span>
+                            </div>
                         </div>
                     </div>
                     <div class="actions">
                         <button id="theme-toggle" title="Toggle Theme"><i class="fas fa-moon"></i></button>
                         <button id="shuffle-btn" title="Shuffle"><i class="fas fa-random"></i></button>
                         <button id="reset-btn" title="Reset Progress"><i class="fas fa-redo"></i></button>
-                        <button id="logout-btn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+                        <span class="divider"></span>
+                        <button id="logout-btn" title="Logout" class="danger-text"><i
+                                class="fas fa-sign-out-alt"></i></button>
                     </div>
                 </div>
 
-                <div class="card-container">
+                <div class="result-screen hidden" id="result-screen">
+                    <div class="result-card">
+                        <i class="fas fa-trophy result-icon"></i>
+                        <h2>Review Selesai!</h2>
+                        <div class="result-stats">
+                            <div class="result-stat-item">
+                                <span class="label">Total Hafal</span>
+                                <span class="value success-text" id="final-hafal">0</span>
+                            </div>
+                            <div class="result-stat-item">
+                                <span class="label">Belum Hafal</span>
+                                <span class="value danger-text" id="final-belum">0</span>
+                            </div>
+                        </div>
+                        <div class="result-actions">
+                            <button id="study-unlearned-btn" class="btn-primary">Pelajari yang belum hafal (<span
+                                    id="unlearned-count">0</span>)</button>
+                            <button id="restart-progress-btn" class="btn-secondary">Restart/Reset Progress</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-container" id="card-stage">
                     <div class="card" id="card">
                         <div class="face front">
                             <div class="front-header">
-                                <button id="edit-card-btn-front" class="icon-btn primary-btn"><i
+                                <button id="edit-card-btn-front" class="icon-btn primary-btn hidden"><i
                                         class="fas fa-edit"></i></button>
                             </div>
                             <div class="q-wrapper">
@@ -45,7 +75,7 @@
                         </div>
                         <div class="face back">
                             <div class="back-header">
-                                <button id="edit-card-btn" class="icon-btn primary-btn"><i
+                                <button id="edit-card-btn" class="icon-btn primary-btn hidden"><i
                                         class="fas fa-edit"></i></button>
                                 <button id="delete-card-btn" class="icon-btn danger"><i
                                         class="fas fa-trash-alt"></i></button>
@@ -62,6 +92,10 @@
                                 </div>
 
                                 <div id="tips-container" class="tips-section hidden">
+                                    <div class="tips-header">
+                                        <button id="tip-edit-btn" class="tip-edit-btn"><i
+                                                class="fas fa-pencil-alt"></i></button>
+                                    </div>
                                     <div id="t-display" class="tips-display"></div>
                                     <textarea id="t-content" class="tips-edit hidden" placeholder="Tambahkan tips..."
                                         spellcheck="false"></textarea>
@@ -206,6 +240,20 @@
             <div class="modal-footer">
                 <button id="modal-close-btn" class="btn-secondary">Close</button>
                 <button id="modal-save-btn" class="btn-primary">Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM ALERT/CONFIRM MODAL -->
+    <div id="custom-alert" class="modal">
+        <div class="modal-content small alert-box">
+            <div class="modal-header">
+                <h3 id="alert-title">Notification</h3>
+            </div>
+            <div id="alert-message" class="alert-message">Message here...</div>
+            <div class="modal-footer">
+                <button id="alert-cancel" class="btn-secondary hidden">Batal</button>
+                <button id="alert-ok" class="btn-primary">OK</button>
             </div>
         </div>
     </div>
