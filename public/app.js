@@ -39,10 +39,17 @@ const els = {
     newA: document.getElementById('new-a'),
     newT: document.getElementById('new-t'),
     addModalSave: document.getElementById('add-modal-save'),
-    addModalClose: document.getElementById('add-modal-close')
+    addModalClose: document.getElementById('add-modal-close'),
+    themeToggle: document.getElementById('theme-toggle')
 };
 
 async function init() {
+    // Theme Init
+    if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-mode');
+        els.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+
     const res = await fetch('/api/cards');
     const data = await res.json();
     allCards = data.cards;
@@ -174,7 +181,6 @@ function renderReview() {
     
     let html = `<div class="bubble left">${current.question}</div>`;
     
-    // Primary answer bubble with edit capability
     if (isEditingCard) {
         html += `<div class="bubble right"><textarea id="a-inline-edit" class="bubble-edit">${current.answer}</textarea></div>`;
     } else {
@@ -196,7 +202,6 @@ function renderReview() {
     const hasTips = current.tips && current.tips.trim().length > 0;
     els.tipsContainer.classList.toggle('hidden', !hasTips && !isEditingCard);
     els.tDisplay.innerText = current.tips || "No tips added.";
-    
     els.tEdit.value = current.tips || "";
     
     els.card.classList.remove('flipped');
@@ -206,29 +211,30 @@ function toggleEditVisibility(editing) {
     if (editing) {
         els.q.classList.add('hidden');
         els.qEdit.classList.remove('hidden');
+        els.chatBubbles.classList.remove('hidden');
+        els.aEdit.classList.remove('hidden'); 
         els.tipsContainer.classList.remove('hidden');
         els.tDisplay.classList.add('hidden');
         els.tEdit.classList.remove('hidden');
         document.querySelector('.follow-up-actions').classList.add('hidden');
         document.getElementById('card').classList.add('editing');
-        // Refresh bubbles to show textarea
         renderReviewForEdit();
     } else {
         els.q.classList.remove('hidden');
         els.qEdit.classList.add('hidden');
+        els.chatBubbles.classList.remove('hidden');
         const current = filteredCards[currentIndex % filteredCards.length];
         const hasTips = current && current.tips && current.tips.trim().length > 0;
         els.tipsContainer.classList.toggle('hidden', !hasTips);
         els.tDisplay.classList.remove('hidden');
         els.tEdit.classList.add('hidden');
+        els.aEdit.classList.add('hidden');
         document.querySelector('.follow-up-actions').classList.remove('hidden');
         document.getElementById('card').classList.remove('editing');
-        // Refresh bubbles to remove textarea
         renderReviewAfterSave();
     }
 }
 
-// Special renderers to avoid full reset
 function renderReviewForEdit() {
     const current = filteredCards[currentIndex % filteredCards.length];
     let html = `<div class="bubble left">${current.question}</div>`;
@@ -402,7 +408,6 @@ els.jikoshoukaiBtn.onclick = async () => {
         els.jikoshoukai.readOnly = true;
         els.jikoshoukaiBtn.innerHTML = '<i class="fas fa-edit"></i>';
         els.jikoshoukaiBtn.classList.remove('editing');
-        // Final save
         await fetch('/api/jikoshoukai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -441,6 +446,13 @@ document.getElementById('edit-card-btn').onclick = toggleEditMode;
 document.getElementById('edit-card-btn-front').onclick = toggleEditMode;
 document.getElementById('add-follow-q').onclick = (e) => { e.stopPropagation(); openFollowUpModal('q'); };
 document.getElementById('add-follow-a').onclick = (e) => { e.stopPropagation(); openFollowUpModal('a'); };
+
+els.themeToggle.onclick = () => {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    els.themeToggle.innerHTML = isLight ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+};
 
 els.fuSave.onclick = saveFollowUp;
 els.fuClose.onclick = () => els.fuModal.style.display = "none";
