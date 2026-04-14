@@ -17,8 +17,8 @@ let allCards = [];
 let filteredCards = [];
 let currentIndex = 0;
 let isEditingCardBack = false;
-let isEditingCardFront = false;
 let isEditingJikoshoukai = false;
+let sessionHistory = []; // Track { cardId, wasBelum } to allow undo
 
 // Persist session state across page refreshes
 const savedBelum = JSON.parse(localStorage.getItem('sessionBelumIds') || '[]');
@@ -34,6 +34,50 @@ function clearSession() {
     currentIndex = 0;
     localStorage.removeItem('sessionBelumIds');
     localStorage.removeItem('sessionCurrentIndex');
+}
+
+/**
+ * Extract meaningful words from tips text (>= 3 chars, non-Japanese excluded from short).
+ * Returns array of unique strings sorted by length desc (longest first to avoid partial replacement).
+ */
+function extractVocabWords(tipsText) {
+    if (!tipsText) return [];
+    // Split by common separators: newlines, commas, bullets, colons, slashes
+    const raw = tipsText.split(/[\n,、。・:：\/\\|]+/);
+    const words = new Set();
+    raw.forEach(segment => {
+        // Take the first 'word' part (before space or equal sign) if present
+        const cleaned = segment.replace(/[()（）\[\]\-_=～~*#]/g, ' ').trim();
+        // Split by whitespace
+        cleaned.split(/\s+/).forEach(w => {
+            if (w.length >= 2) words.add(w);
+        });
+        // Also try whole segment trimmed
+        if (cleaned.length >= 2 && cleaned.length <= 30) words.add(cleaned);
+    });
+    return [...words].sort((a, b) => b.length - a.length);
+}
+
+/**
+ * Apply .vocab-mark highlight to words from tips found inside .bubble-text elements.
+ */
+function applyVocabHighlight(vocabWords) {
+    if (!vocabWords || vocabWords.length === 0) return;
+    document.querySelectorAll('#chat-bubbles .bubble-text').forEach(el => {
+        let text = el.textContent;
+        // Escape regex special chars
+        const pattern = vocabWords
+            .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('|');
+        if (!pattern) return;
+        const regex = new RegExp(`(${pattern})`, 'g');
+        // Only replace if match exists
+        if (!regex.test(text)) return;
+        el.innerHTML = text.replace(
+            new RegExp(`(${pattern})`, 'g'),
+            '<mark class="vocab-mark">$1</mark>'
+        );
+    });
 }
 
 const els = {
@@ -326,8 +370,15 @@ function renderReview() {
 
     const hasTips = current.tips && current.tips.trim().length > 0;
     els.tipsContainer.classList.toggle('hidden', !hasTips);
-    els.tDisplay.innerText = current.tips || "No tips added.";
+    // Show tips as plain text (pre-wrap via CSS)
+    els.tDisplay.textContent = current.tips || "No tips added.";
     els.tEdit.value = current.tips || "";
+
+    // Apply vocab highlight to bubbles based on tips words
+    if (hasTips) {
+        const vocabWords = extractVocabWords(current.tips);
+        applyVocabHighlight(vocabWords);
+    }
 
     els.card.classList.remove('flipped');
 }
@@ -446,7 +497,7 @@ function renderReviewAfterSave() {
 
     // Sinkronkan text di bagian depan dan tab display
     els.q.innerText = current.question;
-    els.tDisplay.innerText = current.tips || "No tips added.";
+    els.tDisplay.textContent = current.tips || "No tips added.";
 
     let html = `
         <div class="bubble left">
@@ -479,6 +530,12 @@ function renderReviewAfterSave() {
         });
     }
     els.chatBubbles.innerHTML = html;
+
+    // Apply vocab highlight in after-save mode too
+    const currentCard = filteredCards[currentIndex % filteredCards.length];
+    if (currentCard && currentCard.tips) {
+        applyVocabHighlight(extractVocabWords(currentCard.tips));
+    }
 }
 
 let currentFuType = 'q';
@@ -585,9 +642,11 @@ async function updateStatus(status) {
     if (original) original.status = status;
 
     if (status === 1) {
+        sessionHistory.push({ cardId: current.id, wasBelum: false });
         currentIndex++;
     } else {
         sessionBelumIds.add(current.id);
+        sessionHistory.push({ cardId: current.id, wasBelum: true });
         currentIndex++;
     }
 
@@ -775,6 +834,31 @@ els.addTipsBtn.onclick = (e) => {
 els.tipEditBtn.onclick = (e) => {
     e.stopPropagation();
     toggleEditMode(e, 'tips');
+};
+
+document.getElementById('undo-btn').onclick = async () => {
+    if (currentIndex === 0 || sessionHistory.length === 0) return;
+
+    const lastAction = sessionHistory.pop();
+    const card = allCards.find(c => c.id === lastAction.cardId);
+
+    if (card) {
+        // Reset status to unlearned (0)
+        card.status = 0;
+        await fetch(`/api/cards/${card.id}/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 0 })
+        });
+
+        if (lastAction.wasBelum) {
+            sessionBelumIds.delete(card.id);
+        }
+    }
+
+    currentIndex--;
+    saveSession();
+    renderReview();
 };
 
 init();

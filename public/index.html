@@ -11,6 +11,19 @@
 
 <body>
     <div id="app">
+        <!-- GLOBAL HEADER -->
+        <div class="global-header">
+            <div class="app-brand">
+                <i class="fas fa-layer-group"></i>
+                <span>Mensetsu</span>
+            </div>
+            <div class="global-actions">
+                <button id="theme-toggle" title="Toggle Theme"><i class="fas fa-moon"></i></button>
+                <span class="divider"></span>
+                <button id="logout-btn" title="Logout" class="danger-text"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+
         <!-- TABS CONTENT -->
         <main class="content-area">
             <!-- REVIEW TAB -->
@@ -26,14 +39,6 @@
                                 <span id="belum-count">0</span>
                             </div>
                         </div>
-                    </div>
-                    <div class="actions">
-                        <button id="theme-toggle" title="Toggle Theme"><i class="fas fa-moon"></i></button>
-                        <button id="shuffle-btn" title="Shuffle"><i class="fas fa-random"></i></button>
-                        <button id="reset-btn" title="Reset Progress"><i class="fas fa-redo"></i></button>
-                        <span class="divider"></span>
-                        <button id="logout-btn" title="Logout" class="danger-text"><i
-                                class="fas fa-sign-out-alt"></i></button>
                     </div>
                 </div>
 
@@ -111,28 +116,39 @@
                 </div>
 
                 <div class="status-actions-nav">
-                    <button id="btn-belum" class="status-nav-btn belum"><i class="fas fa-times"></i> Belum</button>
-                    <button id="btn-hafal" class="status-nav-btn hafal"><i class="fas fa-check"></i> Hafal</button>
+                    <div class="card-controls">
+                        <button id="undo-btn" title="Undo"><i class="fas fa-undo"></i></button>
+                        <button id="shuffle-btn" title="Shuffle"><i class="fas fa-random"></i></button>
+                        <button id="reset-btn" title="Reset Progress"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                    <div class="main-actions">
+                        <button id="btn-belum" class="status-nav-btn belum"><i class="fas fa-times"></i> Belum</button>
+                        <button id="btn-hafal" class="status-nav-btn hafal"><i class="fas fa-check"></i> Hafal</button>
+                    </div>
                 </div>
             </div>
 
             <!-- JIKOSHOUKAI TAB -->
             <div id="view-jikoshoukai" class="view">
                 <div class="view-header">
-                    <div class="header-with-action">
-                        <div>
+                    <div class="jiko-header">
+                        <div class="jiko-title-block">
                             <h1>自己紹介</h1>
                             <p>Self Introduction</p>
                         </div>
-                        <button id="edit-jikoshoukai-btn" class="icon-btn primary-btn"><i
-                                class="fas fa-edit"></i></button>
+                        <div class="jiko-actions">
+                            <button id="edit-jikoshoukai-btn" class="icon-btn primary-btn" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <div id="jikoshoukai-status" class="save-status hidden">
+                                <i class="fas fa-cloud-upload-alt"></i> Saving...
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="editor-container">
                     <textarea id="jikoshoukai-editor" placeholder="Tulis jikoshoukai anda di sini..."
                         readonly></textarea>
-                    <div id="jikoshoukai-status" class="save-status hidden"><i class="fas fa-cloud-upload-alt"></i>
-                        Auto-saving...</div>
                 </div>
             </div>
 
@@ -157,10 +173,11 @@
                 </div>
                 <div class="management-actions">
                     <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="card-search" placeholder="Cari...">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="card-search" placeholder="Cari kartu...">
                     </div>
-                    <button id="add-card-btn" title="Add New Card"><i class="fas fa-plus"></i></button>
+                    <button id="add-card-btn" class="add-card-btn" title="Add New Card"><i
+                            class="fas fa-plus"></i></button>
                 </div>
                 <div id="cards-list" class="cards-management-list"></div>
             </div>

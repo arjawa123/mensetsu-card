@@ -1,8 +1,9 @@
 :root {
     --bg: #0f172a;
     --surface: #1e293b;
+    --surface2: #263347;
     --primary: #38bdf8;
-    --primary-muted: rgba(56, 189, 248, 0.1);
+    --primary-muted: rgba(56, 189, 248, 0.12);
     --text: #f8fafc;
     --text-muted: #94a3b8;
     --success: #22c55e;
@@ -10,16 +11,19 @@
     --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
     --bubble-left: #334155;
     --bubble-right: #075e54;
+    --header-height: 56px;
+    --tabbar-height: 68px;
 }
 
 body.light-mode {
-    --bg: #f8fafc;
+    --bg: #f1f5f9;
     --surface: #ffffff;
+    --surface2: #e2e8f0;
     --primary: #0284c7;
     --primary-muted: rgba(2, 132, 199, 0.1);
     --text: #0f172a;
-    --text-muted: #475569;
-    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --text-muted: #64748b;
+    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
     --bubble-left: #e2e8f0;
     --bubble-right: #dcf8c6;
 }
@@ -45,26 +49,84 @@ body {
     color: var(--text);
 }
 
-.view,
-.face,
-.stat-item,
-.tab-bar,
-.search-box,
-.m-card,
-.bubble,
-.icon-btn,
-button,
-textarea,
-input {
-    transition: all 0.3s ease;
-}
-
+/* =====================
+   APP LAYOUT
+===================== */
 #app {
     display: flex;
     flex-direction: column;
     height: 100%;
     height: 100dvh;
     width: 100vw;
+    max-width: 100vw;
+}
+
+/* Global Header */
+.global-header {
+    height: var(--header-height);
+    background: var(--surface);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+body.light-mode .global-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--primary);
+}
+
+.app-brand i {
+    font-size: 18px;
+}
+
+.global-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.global-actions button {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.global-actions button:hover {
+    background: var(--primary-muted);
+    color: var(--primary);
+}
+
+.global-actions button.danger-text {
+    color: var(--danger);
+}
+
+.divider {
+    width: 1px;
+    height: 20px;
+    background: var(--text-muted);
+    opacity: 0.25;
+    margin: 0 4px;
 }
 
 .content-area {
@@ -86,26 +148,21 @@ input {
     display: flex;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
+/* =====================
+   TAB BAR
+===================== */
 .tab-bar {
     display: flex;
-    height: 75px;
+    height: var(--tabbar-height);
     background: var(--surface);
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     flex-shrink: 0;
     padding-bottom: env(safe-area-inset-bottom);
     z-index: 1000;
+}
+
+body.light-mode .tab-bar {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .tab-item {
@@ -120,10 +177,11 @@ input {
     gap: 4px;
     padding: 0;
     cursor: pointer;
+    transition: color 0.15s, background 0.15s;
 }
 
 .tab-item i {
-    font-size: 22px;
+    font-size: 21px;
 }
 
 .tab-item span {
@@ -137,8 +195,11 @@ input {
     background: var(--primary-muted);
 }
 
+/* =====================
+   REVIEW TAB
+===================== */
 .header {
-    padding: 10px 20px;
+    padding: 10px 16px 6px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -155,7 +216,7 @@ input {
 
 .stat-badges {
     display: flex;
-    gap: 8px;
+    gap: 6px;
 }
 
 .hafal-badge {
@@ -165,6 +226,7 @@ input {
     display: flex;
     align-items: center;
     gap: 4px;
+    font-weight: 700;
 }
 
 .hafal-badge.success-text {
@@ -185,47 +247,24 @@ input {
     color: var(--danger) !important;
 }
 
-.actions {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.divider {
-    width: 1px;
-    height: 20px;
-    background: var(--text-muted);
-    opacity: 0.3;
-    margin: 0 5px;
-}
-
-.actions button {
-    background: var(--surface);
-    border: none;
-    color: var(--text);
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
+/* =====================
+   CARD
+===================== */
 .card-container {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 15px;
+    padding: 8px 16px;
     perspective: 1000px;
     min-height: 0;
 }
 
 .card {
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     height: 100%;
-    max-height: 460px;
+    max-height: 450px;
     position: relative;
     transform-style: preserve-3d;
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -241,11 +280,15 @@ input {
     backface-visibility: hidden;
     background: var(--surface);
     border-radius: 24px;
-    padding: 25px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: var(--card-shadow);
+}
+
+body.light-mode .face {
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .face.back {
@@ -258,11 +301,11 @@ input {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding-top: 28px;
+    padding: 20px 0;
 }
 
 .jp-text {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
     line-height: 1.5;
 }
@@ -271,46 +314,39 @@ input {
     text-align: center;
     font-size: 11px;
     color: var(--text-muted);
-    margin-top: 10px;
+    margin-top: 8px;
 }
-
-
 
 .back-header,
 .front-header {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     gap: 8px;
     backface-visibility: hidden;
     transform: translateZ(2px);
-    /* Higher Z to stay on top */
     z-index: 100;
-}
-
-.back-header {
-    position: relative;
-    padding-bottom: 5px;
 }
 
 .front-header {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 14px;
+    right: 14px;
     z-index: 10;
 }
 
+/* =====================
+   SCROLL & CHAT
+===================== */
 .scroll-area {
     flex: 1;
     overflow-y: auto;
-    padding-right: 0;
     scrollbar-width: thin;
     scrollbar-color: var(--primary-muted) transparent;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
 .scroll-area::-webkit-scrollbar {
-    width: 4px;
+    width: 3px;
 }
 
 .scroll-area::-webkit-scrollbar-track {
@@ -322,24 +358,19 @@ input {
     border-radius: 20px;
 }
 
-.scroll-area:hover::-webkit-scrollbar-thumb {
-    background-color: var(--text-muted);
-    opacity: 0.5;
-}
-
 .chat-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 10px 0;
+    gap: 10px;
+    padding: 6px 0;
 }
 
 .bubble {
     max-width: 85%;
     padding: 10px 14px;
     border-radius: 18px;
-    font-size: 15px;
-    line-height: 1.4;
+    font-size: 14px;
+    line-height: 1.5;
     position: relative;
     word-wrap: break-word;
 }
@@ -353,7 +384,7 @@ input {
 }
 
 body.light-mode .bubble.left {
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .bubble.right {
@@ -368,6 +399,22 @@ body.light-mode .bubble.right {
     color: #075e54;
 }
 
+/* Vocab highlight inside bubbles */
+.vocab-mark {
+    background: rgba(56, 189, 248, 0.22);
+    color: var(--primary);
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-weight: 700;
+    font-size: 0.92em;
+    cursor: default;
+}
+
+body.light-mode .vocab-mark {
+    background: rgba(2, 132, 199, 0.15);
+    color: var(--primary);
+}
+
 .editing .bubble:not(.editing-focus) {
     opacity: 0.4;
     filter: blur(0.5px);
@@ -376,7 +423,6 @@ body.light-mode .bubble.right {
 .bubble.editing-focus {
     opacity: 1 !important;
     filter: none !important;
-    z-index: 10;
     box-shadow: 0 0 15px var(--primary-muted);
     border: 1px solid var(--primary);
 }
@@ -384,7 +430,7 @@ body.light-mode .bubble.right {
 .bubble-actions {
     display: flex;
     gap: 8px;
-    margin-top: 6px;
+    margin-top: 5px;
     opacity: 0.4;
     transition: opacity 0.2s;
     justify-content: flex-end;
@@ -398,9 +444,9 @@ body.light-mode .bubble.right {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
-    padding: 4px;
+    padding: 3px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -422,13 +468,13 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     position: absolute;
     top: -5px;
     right: -5px;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     background: var(--danger);
     color: white;
     border-radius: 50%;
     border: 2px solid var(--surface);
-    font-size: 10px;
+    font-size: 9px;
     display: none;
     align-items: center;
     justify-content: center;
@@ -450,16 +496,19 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     left: -5px;
 }
 
+/* =====================
+   FOLLOW-UP + TIPS
+===================== */
 .follow-up-actions {
     display: flex;
     justify-content: space-between;
-    margin: 15px 0;
-    padding: 0 5px;
+    margin: 12px 0;
+    padding: 0 4px;
 }
 
 .mini-fab {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     border: none;
     background: var(--primary-muted);
@@ -467,28 +516,43 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 13px;
+    cursor: pointer;
 }
 
 .tips-section {
-    margin-top: 15px;
+    margin-top: 12px;
     border-top: 1px dashed rgba(255, 255, 255, 0.1);
-    padding-top: 12px;
+    padding-top: 10px;
+}
+
+body.light-mode .tips-section {
+    border-top: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.tips-section::before {
+    content: "TIPS & VOCAB";
+    display: block;
+    font-size: 9px;
+    color: var(--primary);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
 }
 
 .tips-header {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .tip-edit-btn {
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
-    padding: 5px;
+    padding: 4px;
     opacity: 0.6;
     transition: opacity 0.2s;
 }
@@ -498,26 +562,23 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     color: var(--primary);
 }
 
-.tips-section::before {
-    content: "TIPS & VOCAB";
-    display: block;
-    font-size: 10px;
-    color: var(--primary);
-    font-weight: 800;
-    margin-bottom: 8px;
-}
-
-.jp-display,
 .tips-display {
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
+    padding: 10px 12px;
+    background: rgba(56, 189, 248, 0.05);
+    border: 1px solid rgba(56, 189, 248, 0.12);
+    border-radius: 12px;
     white-space: pre-wrap;
     line-height: 1.6;
+    font-size: 13px;
+}
+
+body.light-mode .tips-display {
+    background: rgba(2, 132, 199, 0.05);
+    border-color: rgba(2, 132, 199, 0.12);
 }
 
 .jp-edit {
-    min-height: 200px;
+    min-height: 160px;
     height: 100%;
 }
 
@@ -527,11 +588,10 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     background: var(--surface);
     border: 1px solid var(--primary);
     border-radius: 10px;
-    margin-top: 10px;
-    /* Added margin to prevent overlap with title */
+    margin-top: 8px;
     padding: 10px;
     color: var(--text);
-    font-size: 16px;
+    font-size: 15px;
     resize: none;
     min-height: 80px;
     overflow-y: auto;
@@ -539,15 +599,14 @@ body.light-mode .bubble.right .bubble-actions button:hover {
 
 .add-tips-btn {
     width: 100%;
-    padding: 12px;
-    margin-top: 25px;
-    /* Added more space */
-    margin-bottom: 20px;
+    padding: 11px;
+    margin-top: 20px;
+    margin-bottom: 14px;
     background: transparent;
     color: var(--text-muted);
-    border: 1px dashed var(--text-muted);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
     border-radius: 12px;
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -555,7 +614,6 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     gap: 8px;
     transition: all 0.2s;
     opacity: 0.5;
-    /* More faded */
 }
 
 .add-tips-btn:hover {
@@ -565,28 +623,44 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     opacity: 1;
 }
 
+/* =====================
+   STATUS + CARD CONTROLS
+===================== */
 .status-actions-nav {
     display: flex;
-    padding: 10px 20px 25px;
-    gap: 15px;
-    align-items: center;
+    flex-direction: column;
+    padding: 10px 16px 20px;
+    gap: 12px;
     background: var(--bg);
     flex-shrink: 0;
 }
 
+.main-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
 .status-nav-btn {
     flex: 1;
-    padding: 18px;
+    padding: 16px;
     border: none;
-    border-radius: 20px;
+    border-radius: 18px;
     font-weight: 800;
     color: white;
-    font-size: 16px;
+    font-size: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.status-nav-btn:active {
+    transform: scale(0.97);
+    box-shadow: none;
 }
 
 .status-nav-btn.belum {
@@ -597,15 +671,48 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     background: var(--success);
 }
 
-.icon-btn {
+/* Shuffle + Reset mini buttons above hafal/belum */
+.card-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.card-controls button {
     width: 36px;
     height: 36px;
+    border-radius: 10px;
+    border: none;
+    background: var(--surface);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.card-controls button:hover {
+    background: var(--primary-muted);
+    color: var(--primary);
+}
+
+/* =====================
+   ICON BUTTONS
+===================== */
+.icon-btn {
+    width: 34px;
+    height: 34px;
     border-radius: 10px;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    font-size: 14px;
 }
 
 .icon-btn.primary-btn {
@@ -623,66 +730,104 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     color: var(--danger);
 }
 
+/* =====================
+   JIKOSHOUKAI TAB
+===================== */
 .view-header {
-    padding: 20px 20px 5px;
+    padding: 16px 20px 8px;
     flex-shrink: 0;
 }
 
 .view-header h1 {
     margin: 0;
-    font-size: 22px;
+    font-size: 20px;
 }
 
-.header-with-action {
+.jiko-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.jiko-title-block h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.jiko-title-block p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+
+.jiko-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 4px;
 }
 
 .editor-container {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 15px;
+    padding: 12px 20px 16px;
     min-height: 0;
 }
 
 #jikoshoukai-editor {
     flex: 1;
-    background: var(--surface);
+    background: transparent;
     border: none;
-    border-radius: 20px;
-    padding: 20px;
+    border-radius: 16px;
+    padding: 16px 4px;
     color: var(--text);
-    font-size: 17px;
-    line-height: 1.6;
+    font-size: 16px;
+    line-height: 1.75;
     resize: none;
 }
 
 #jikoshoukai-editor[readonly] {
     background: transparent;
-    padding-left: 0;
-    padding-right: 0;
+    cursor: default;
 }
 
 #jikoshoukai-editor:not([readonly]) {
     background: var(--surface);
     border: 1px dashed var(--primary);
+    padding: 16px;
+    border-radius: 16px;
 }
 
+.save-status {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* =====================
+   CARD MANAGEMENT TAB
+===================== */
 .stats-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
-    margin-top: 15px;
+    margin-top: 12px;
 }
 
 .stat-item {
     background: var(--surface);
-    padding: 15px;
-    border-radius: 15px;
+    padding: 14px 10px;
+    border-radius: 14px;
     text-align: center;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .stat-value {
@@ -693,13 +838,14 @@ body.light-mode .bubble.right .bubble-actions button:hover {
 }
 
 .stat-label {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text-muted);
     text-transform: uppercase;
     font-weight: 700;
-    margin-top: 5px;
+    margin-top: 4px;
 }
 
+/* Search Bar - more distinct design */
 .management-actions {
     padding: 10px 20px;
     display: flex;
@@ -709,18 +855,32 @@ body.light-mode .bubble.right .bubble-actions button:hover {
 
 .search-box {
     background: var(--surface);
-    border-radius: 12px;
-    padding: 10px 15px;
+    border-radius: 14px;
+    padding: 0 14px;
     display: flex;
     align-items: center;
     gap: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 2px solid rgba(56, 189, 248, 0.2);
     flex: 1;
+    height: 46px;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.search-box i {
-    color: var(--text-muted);
+.search-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-muted);
+}
+
+body.light-mode .search-box {
+    border: 2px solid rgba(2, 132, 199, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.search-icon {
+    color: var(--primary);
     font-size: 14px;
+    opacity: 0.7;
+    flex-shrink: 0;
 }
 
 .search-box input {
@@ -728,14 +888,19 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     border: none;
     color: var(--text);
     flex: 1;
-    font-size: 15px;
+    font-size: 14px;
+    height: 100%;
 }
 
-#add-card-btn {
-    width: 44px;
-    height: 44px;
+.search-box input::placeholder {
+    color: var(--text-muted);
+}
+
+.add-card-btn {
+    width: 46px;
+    height: 46px;
     flex-shrink: 0;
-    border-radius: 12px;
+    border-radius: 14px;
     background: var(--primary);
     color: white;
     border: none;
@@ -743,6 +908,14 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     align-items: center;
     justify-content: center;
     font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.add-card-btn:active {
+    transform: scale(0.95);
+    box-shadow: none;
 }
 
 .cards-management-list {
@@ -756,12 +929,13 @@ body.light-mode .bubble.right .bubble-actions button:hover {
 
 .m-card {
     background: var(--surface);
-    border-radius: 15px;
-    padding: 15px;
+    border-radius: 14px;
+    padding: 14px;
     display: flex;
     align-items: center;
     gap: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    transition: transform 0.15s;
 }
 
 .m-card-info {
@@ -771,7 +945,7 @@ body.light-mode .bubble.right .bubble-actions button:hover {
 
 .m-card-info h3 {
     margin: 0;
-    font-size: 15px;
+    font-size: 14px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -779,7 +953,7 @@ body.light-mode .bubble.right .bubble-actions button:hover {
 }
 
 .m-card-info p {
-    margin: 5px 0 0;
+    margin: 4px 0 0;
     font-size: 12px;
     color: var(--text-muted);
     white-space: nowrap;
@@ -819,8 +993,8 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     background: transparent;
     border: none;
     color: inherit;
-    font-size: 15px;
-    line-height: 1.4;
+    font-size: 14px;
+    line-height: 1.5;
     resize: none;
     min-height: initial;
     overflow: hidden;
@@ -828,56 +1002,66 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     font-family: inherit;
 }
 
+/* =====================
+   MODALS
+===================== */
 .modal {
     display: none;
     position: fixed;
     inset: 0;
     z-index: 20000;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal[style*="block"] {
+    display: flex !important;
 }
 
 .modal-content {
     background: var(--surface);
-    margin: 5vh auto;
-    padding: 25px;
-    width: 90%;
-    max-width: 450px;
+    padding: 24px;
+    width: 92%;
+    max-width: 440px;
     border-radius: 24px;
     box-shadow: var(--card-shadow);
+    animation: fadeIn 0.25s ease;
 }
 
 .modal-content.small {
-    margin: 20vh auto;
-    max-width: 350px;
+    max-width: 340px;
 }
 
 .modal-header {
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 
 .modal-header h3 {
     margin: 0;
     color: var(--text);
+    font-size: 17px;
 }
 
 .input-group {
-    margin-bottom: 15px;
+    margin-bottom: 14px;
 }
 
 .input-group label {
     display: block;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--primary);
     font-weight: 800;
     margin-bottom: 5px;
     text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 .input-group textarea {
     width: 100%;
     background: var(--bg);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 12px;
     padding: 12px;
     color: var(--text);
@@ -890,12 +1074,12 @@ body.light-mode .bubble.right .bubble-actions button:hover {
 .modal-footer {
     display: flex;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 18px;
 }
 
 .modal-footer button {
     flex: 1;
-    padding: 14px;
+    padding: 13px;
     border-radius: 12px;
     border: none;
     font-weight: 700;
@@ -918,6 +1102,7 @@ body.light-mode .bubble.right .bubble-actions button:hover {
     font-size: 14px;
     line-height: 1.6;
     margin-bottom: 5px;
+    white-space: pre-wrap;
 }
 
 .alert-box {
@@ -925,91 +1110,91 @@ body.light-mode .bubble.right .bubble-actions button:hover {
 }
 
 .alert-box .modal-header h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
+    font-size: 17px;
+    margin-bottom: 8px;
 }
 
 .hidden {
     display: none !important;
 }
 
-/* RESULT SCREEN */
+/* =====================
+   RESULT SCREEN
+===================== */
 .result-screen {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    animation: fadeIn 0.5s ease;
+    animation: fadeIn 0.4s ease;
 }
 
 .result-card {
     background: var(--surface);
     width: 100%;
-    max-width: 400px;
-    padding: 40px 30px;
-    border-radius: 30px;
+    max-width: 380px;
+    padding: 36px 28px;
+    border-radius: 28px;
     text-align: center;
     box-shadow: var(--card-shadow);
 }
 
 .result-icon {
-    font-size: 60px;
+    font-size: 56px;
     color: #ffd700;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .result-stats {
     display: flex;
     justify-content: space-around;
-    margin: 30px 0;
+    margin: 24px 0;
     background: var(--bg);
-    padding: 20px;
-    border-radius: 20px;
+    padding: 18px;
+    border-radius: 18px;
 }
 
 .result-stat-item {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
 }
 
 .result-stat-item .label {
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
     font-weight: 800;
     color: var(--text-muted);
 }
 
 .result-stat-item .value {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
 }
 
 .result-actions {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .result-actions .btn-primary {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 18px;
-    border-radius: 20px;
+    padding: 17px;
+    border-radius: 18px;
     font-weight: 800;
-    font-size: 15px;
+    font-size: 14px;
     cursor: pointer;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+    border: none;
 }
 
 .result-actions .btn-secondary {
     background: transparent;
     color: var(--text-muted);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 16px;
-    border-radius: 20px;
+    padding: 15px;
+    border-radius: 18px;
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
@@ -1023,17 +1208,132 @@ body.light-mode .bubble.right .bubble-actions button:hover {
 .result-actions .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.05);
     color: var(--text);
-    border-color: rgba(255, 255, 255, 0.2);
 }
 
+body.light-mode .result-actions .btn-secondary {
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* =====================
+   ANIMATIONS
+===================== */
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(8px);
     }
 
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* =====================
+   RESPONSIVE - TABLET (>= 640px)
+===================== */
+@media (min-width: 640px) {
+    .card {
+        max-width: 480px;
+        max-height: 500px;
+    }
+
+    .jp-text {
+        font-size: 26px;
+    }
+
+    .status-actions-nav {
+        padding: 12px 60px 24px;
+        gap: 16px;
+    }
+
+    .status-nav-btn {
+        font-size: 16px;
+        padding: 18px;
+    }
+
+    .card-controls button {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+
+    .global-header {
+        padding: 0 32px;
+    }
+
+    .view-header {
+        padding: 20px 40px 8px;
+    }
+
+    .management-actions {
+        padding: 10px 40px;
+    }
+
+    .cards-management-list {
+        padding: 0 40px 24px;
+    }
+
+    .editor-container {
+        padding: 14px 40px 20px;
+    }
+}
+
+/* =====================
+   RESPONSIVE - DESKTOP (>= 1024px)
+===================== */
+@media (min-width: 1024px) {
+
+    /* Batasi lebar app dan pusatkan */
+    #app {
+        max-width: 860px;
+        margin: 0 auto;
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    body.light-mode #app {
+        border-color: rgba(0, 0, 0, 0.07);
+    }
+
+    .card {
+        max-width: 540px;
+        max-height: 490px;
+    }
+
+    .card-container {
+        padding: 16px 80px;
+    }
+
+    .status-actions-nav {
+        padding: 12px 80px 26px;
+    }
+
+    .tab-bar {
+        height: 72px;
+    }
+
+    .tab-item i {
+        font-size: 22px;
+    }
+
+    .view-header {
+        padding: 24px 60px 10px;
+    }
+
+    .management-actions {
+        padding: 10px 60px;
+    }
+
+    .cards-management-list {
+        padding: 0 60px 28px;
+    }
+
+    .editor-container {
+        padding: 16px 60px 24px;
+    }
+
+    .global-header {
+        padding: 0 40px;
     }
 }
