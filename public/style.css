@@ -120,16 +120,49 @@ body {
 
 /* Edit / Mode Logic */
 .hidden { display: none !important; }
-.back-header { display: flex; justify-content: flex-end; margin-bottom: 8px; gap: 8px; }
+.back-header, .front-header { display: flex; justify-content: flex-end; margin-bottom: 8px; gap: 8px; }
+.front-header { position: absolute; top: 15px; right: 15px; z-index: 10; }
 .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
 .scroll-area::-webkit-scrollbar { width: 3px; }
 .scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 
 .field-group { margin-bottom: 15px; }
-.field-group label { display: block; font-size: 10px; color: var(--primary); font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
+
+/* Chat Styles */
+.chat-container { display: flex; flex-direction: column; gap: 12px; padding: 10px 0; }
+.bubble {
+    max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.4;
+    position: relative; word-wrap: break-word;
+}
+.bubble.left { 
+    align-self: flex-start; background: #334155; color: white; border-bottom-left-radius: 4px; 
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.bubble.right { 
+    align-self: flex-end; background: #075e54; color: white; border-bottom-right-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.follow-up-actions { display: flex; justify-content: space-between; margin: 15px 0; padding: 0 5px; }
+.mini-fab {
+    width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--primary-muted);
+    color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.mini-fab:active { transform: scale(0.9); }
+
+.tips-section { margin-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; }
+.tips-section::before { content: "TIPS & VOCAB"; display: block; font-size: 10px; color: var(--primary); font-weight: 800; margin-bottom: 8px; }
+
 .jp-display, .tips-display { padding: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; white-space: pre-wrap; line-height: 1.6; }
 .jp-display { font-size: 17px; }
 .tips-display { font-size: 13px; color: var(--text-muted); }
+
+#a-content { 
+    display: block; width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--primary);
+    border-radius: 10px; padding: 10px; color: white; font-size: 16px; resize: none;
+    min-height: 100px; margin-bottom: 10px;
+}
+#a-content.hidden { display: none !important; }
 
 .jp-edit, .tips-edit {
     width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--primary);
@@ -191,17 +224,60 @@ body {
 }
 .save-status { font-size: 11px; color: var(--text-muted); padding: 10px; text-align: center; }
 
-/* Notes */
-.notes-grid { flex: 1; overflow-y: auto; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
-.note-card { background: var(--surface); border-radius: 15px; padding: 15px; height: 140px; display: flex; flex-direction: column; }
-.note-card h3 { margin: 0 0 5px; font-size: 14px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.note-card p { margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
-.fab { background: var(--primary); border: none; width: 40px; height: 40px; border-radius: 12px; color: var(--bg); font-size: 18px; }
+/* Card Management View */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
+.stat-item { background: var(--surface); padding: 15px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+.stat-value { display: block; font-size: 20px; font-weight: 800; color: var(--primary); }
+.stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-top: 5px; }
+
+.management-actions { padding: 15px 20px; }
+.btn-primary-wide { width: 100%; background: var(--primary); color: var(--bg); border: none; border-radius: 15px; padding: 15px; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 15px -3px rgba(56, 189, 248, 0.2); }
+
+.cards-management-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+.m-card { background: var(--surface); border-radius: 15px; padding: 15px; display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); }
+.m-card-info { flex: 1; min-width: 0; }
+.m-card-info h3 { margin: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.m-card-info p { margin: 5px 0 0; font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-card-actions { display: flex; gap: 5px; }
+.m-card-btn { width: 32px; height: 32px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.m-card-btn.edit { background: var(--primary-muted); color: var(--primary); }
+.m-card-btn.delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+/* Modal Inputs */
+.input-group { margin-bottom: 15px; }
+.input-group label { display: block; font-size: 11px; color: var(--primary); font-weight: 800; margin-bottom: 5px; text-transform: uppercase; }
+.input-group textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: white; font-size: 15px; line-height: 1.5; resize: none; min-height: 80px; }
+
+/* Notes - Remove old notes styles if they're redundant */
 
 /* Modal */
 .modal { display: none; position: fixed; inset: 0; z-index: 20000; background: rgba(0,0,0,0.8); }
 .modal-content { background: var(--surface); margin: 5vh auto; padding: 20px; width: 90%; max-width: 450px; border-radius: 24px; }
+.modal-content.small { margin: 20vh auto; max-width: 350px; }
 .modal-header { display: flex; gap: 10px; margin-bottom: 15px; }
+
+#followup-input { width: 100%; height: 120px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: white; font-size: 15px; line-height: 1.5; resize: none; }
+
+.bubble {
+    max-width: 85%; padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4;
+    position: relative; word-wrap: break-word;
+}
+
+.editing .chat-container { opacity: 0.8; }
+
+.del-bubble {
+    position: absolute; top: -5px; right: -5px; width: 22px; height: 22px;
+    background: var(--danger); color: white; border-radius: 50%; border: 2px solid var(--surface);
+    font-size: 10px; display: none; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 5; transition: transform 0.1s;
+}
+.del-bubble:hover { transform: scale(1.2); }
+.editing .del-bubble { display: flex; }
+
+.bubble.left .del-bubble { right: auto; left: -5px; }
+
+.tips-section { margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px; }
+
 #note-title { flex: 1; background: transparent; border: none; color: white; font-size: 18px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); }
 #note-body { width: 100%; height: 300px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: white; font-size: 15px; line-height: 1.5; resize: none; }
 .modal-footer { display: flex; gap: 10px; margin-top: 15px; }

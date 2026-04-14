@@ -1,25 +1,41 @@
 let allCards = [];
 let filteredCards = [];
-let notes = [];
 let currentIndex = 0;
-let currentNoteId = null;
 let isEditingCard = false;
 
 const els = {
     progress: document.getElementById('progress-text'),
     hafalBadge: document.getElementById('hafal-count'),
     q: document.getElementById('q-content'),
-    aDisplay: document.getElementById('a-display'),
-    tDisplay: document.getElementById('t-display'),
+    qEdit: document.getElementById('q-edit'),
     aEdit: document.getElementById('a-content'),
     tEdit: document.getElementById('t-content'),
     card: document.getElementById('card'),
     editBtn: document.getElementById('edit-card-btn'),
+    editBtnFront: document.getElementById('edit-card-btn-front'),
     jikoshoukai: document.getElementById('jikoshoukai-editor'),
-    notesList: document.getElementById('notes-list'),
-    noteModal: document.getElementById('note-modal'),
-    noteTitle: document.getElementById('note-title'),
-    noteBody: document.getElementById('note-body')
+    chatBubbles: document.getElementById('chat-bubbles'),
+    addFollowQ: document.getElementById('add-follow-q'),
+    addFollowA: document.getElementById('add-follow-a'),
+    tipsContainer: document.getElementById('tips-container'),
+    tDisplay: document.getElementById('t-display'),
+    fuModal: document.getElementById('followup-modal'),
+    fuInput: document.getElementById('followup-input'),
+    fuSave: document.getElementById('followup-save-btn'),
+    fuClose: document.getElementById('followup-close-btn'),
+    fuTitle: document.getElementById('followup-modal-title'),
+    // Card Management
+    cardsList: document.getElementById('cards-list'),
+    statTotal: document.getElementById('stat-total'),
+    statHafal: document.getElementById('stat-hafal'),
+    statFu: document.getElementById('stat-fu'),
+    addCardBtn: document.getElementById('add-card-btn'),
+    addCardModal: document.getElementById('add-card-modal'),
+    newQ: document.getElementById('new-q'),
+    newA: document.getElementById('new-a'),
+    newT: document.getElementById('new-t'),
+    addModalSave: document.getElementById('add-modal-save'),
+    addModalClose: document.getElementById('add-modal-close')
 };
 
 async function init() {
@@ -28,24 +44,89 @@ async function init() {
     allCards = data.cards;
     els.jikoshoukai.value = data.jikoshoukai || "";
     
-    await fetchNotes();
     applyFilters();
-}
-
-async function fetchNotes() {
-    const res = await fetch('/api/notes');
-    notes = await res.json();
-    renderNotes();
+    refreshStats();
 }
 
 // --- NAVIGATION ---
 document.querySelectorAll('.tab-item').forEach(btn => {
     btn.onclick = () => {
         document.querySelectorAll('.view, .tab-item').forEach(el => el.classList.remove('active'));
-        document.getElementById(btn.dataset.target).classList.add('active');
+        const target = btn.dataset.target;
+        document.getElementById(target).classList.add('active');
         btn.classList.add('active');
+        if (target === 'view-cards') {
+            refreshStats();
+            renderManagementList();
+        }
     };
 });
+
+// --- CARD MANAGEMENT ---
+async function refreshStats() {
+    const res = await fetch('/api/stats');
+    const stats = await res.json();
+    els.statTotal.innerText = stats.total;
+    els.statHafal.innerText = stats.hafal;
+    els.statFu.innerText = stats.followUps;
+}
+
+function renderManagementList() {
+    els.cardsList.innerHTML = allCards.map(c => `
+        <div class="m-card">
+            <div class="m-card-info">
+                <h3>${c.question}</h3>
+                <p>${c.answer}</p>
+            </div>
+            <div class="m-card-actions">
+                <button class="m-card-btn edit" onclick="editFromList(${c.id})"><i class="fas fa-eye"></i></button>
+                <button class="m-card-btn delete" onclick="deleteFromList(${c.id})"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function editFromList(id) {
+    const idx = allCards.findIndex(c => c.id === id);
+    if (idx !== -1) {
+        filteredCards = [...allCards];
+        currentIndex = idx;
+        renderReview();
+        document.querySelector('.tab-item[data-target="view-review"]').click();
+    }
+}
+
+async function deleteFromList(id) {
+    if (!confirm("Hapus kartu ini selamanya?")) return;
+    await fetch(`/api/cards/${id}`, { method: 'DELETE' });
+    allCards = allCards.filter(c => c.id !== id);
+    applyFilters();
+    refreshStats();
+    renderManagementList();
+}
+
+els.addCardBtn.onclick = () => {
+    els.newQ.value = "";
+    els.newA.value = "";
+    els.newT.value = "";
+    els.addCardModal.style.display = "block";
+};
+
+els.addModalClose.onclick = () => els.addCardModal.style.display = "none";
+
+els.addModalSave.onclick = async () => {
+    const body = { question: els.newQ.value, answer: els.newA.value, tips: els.newT.value };
+    if (!body.question || !body.answer) return alert("Question and Answer are required.");
+    
+    await fetch('/api/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    
+    els.addCardModal.style.display = "none";
+    init(); 
+};
 
 // --- REVIEW LOGIC ---
 function applyFilters() {
@@ -57,8 +138,10 @@ function applyFilters() {
 
 function renderReview() {
     isEditingCard = false;
-    els.editBtn.classList.remove('editing');
-    els.editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+    [els.editBtn, els.editBtnFront].forEach(btn => {
+        btn.classList.remove('editing');
+        btn.innerHTML = '<i class="fas fa-edit"></i>';
+    });
     toggleEditVisibility(false);
 
     const total = filteredCards.length;
@@ -73,11 +156,29 @@ function renderReview() {
 
     const current = filteredCards[currentIndex % total];
     els.progress.innerText = `${(currentIndex % total) + 1} / ${total}`;
-    els.q.innerText = current.question;
     
-    // Set display and edit values
-    els.aDisplay.innerText = current.answer;
+    els.q.innerText = current.question;
+    els.qEdit.value = current.question;
+    
+    let html = `<div class="bubble left">${current.question}</div>`;
+    html += `<div class="bubble right">${current.answer}</div>`;
+    
+    if (current.followUps && current.followUps.length > 0) {
+        current.followUps.forEach(f => {
+            const side = f.type === 'q' ? 'left' : 'right';
+            html += `
+                <div class="bubble ${side}">
+                    ${f.content}
+                    <button class="del-bubble" onclick="deleteFollowUp(event, ${f.id})"><i class="fas fa-times"></i></button>
+                </div>`;
+        });
+    }
+    els.chatBubbles.innerHTML = html;
+    
+    const hasTips = current.tips && current.tips.trim().length > 0;
+    els.tipsContainer.classList.toggle('hidden', !hasTips && !isEditingCard);
     els.tDisplay.innerText = current.tips || "No tips added.";
+    
     els.aEdit.value = current.answer;
     els.tEdit.value = current.tips || "";
     
@@ -86,32 +187,101 @@ function renderReview() {
 
 function toggleEditVisibility(editing) {
     if (editing) {
-        els.aDisplay.classList.add('hidden');
+        els.q.classList.add('hidden');
+        els.qEdit.classList.remove('hidden');
+        els.chatBubbles.classList.remove('hidden');
+        els.aEdit.classList.remove('hidden'); 
+        els.tipsContainer.classList.remove('hidden');
         els.tDisplay.classList.add('hidden');
-        els.aEdit.classList.remove('hidden');
         els.tEdit.classList.remove('hidden');
+        document.querySelector('.follow-up-actions').classList.add('hidden');
+        document.getElementById('card').classList.add('editing');
     } else {
-        els.aDisplay.classList.remove('hidden');
+        els.q.classList.remove('hidden');
+        els.qEdit.classList.add('hidden');
+        els.chatBubbles.classList.remove('hidden');
+        const current = filteredCards[currentIndex % filteredCards.length];
+        const hasTips = current && current.tips && current.tips.trim().length > 0;
+        els.tipsContainer.classList.toggle('hidden', !hasTips);
         els.tDisplay.classList.remove('hidden');
-        els.aEdit.classList.add('hidden');
         els.tEdit.classList.add('hidden');
+        els.aEdit.classList.add('hidden');
+        document.querySelector('.follow-up-actions').classList.remove('hidden');
+        document.getElementById('card').classList.remove('editing');
     }
+}
+
+let currentFuType = 'q';
+function openFollowUpModal(type) {
+    currentFuType = type;
+    els.fuTitle.innerText = type === 'q' ? "Add Follow-up Question" : "Add Follow-up Answer";
+    els.fuInput.value = "";
+    els.fuModal.style.display = "block";
+    els.fuInput.focus();
+}
+
+async function saveFollowUp() {
+    const content = els.fuInput.value.trim();
+    if (!content) return;
+    const current = filteredCards[currentIndex % filteredCards.length];
+
+    await fetch(`/api/cards/${current.id}/follow-up`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, type: currentFuType })
+    });
+
+    els.fuModal.style.display = "none";
+    await refreshCards(current.id);
+}
+
+async function deleteFollowUp(e, id) {
+    e.stopPropagation();
+    if (!confirm("Hapus follow-up ini?")) return;
+    await fetch(`/api/follow-ups/${id}`, { method: 'DELETE' });
+    const current = filteredCards[currentIndex % filteredCards.length];
+    await refreshCards(current.id);
+}
+
+async function refreshCards(currentId) {
+    const res = await fetch('/api/cards');
+    const data = await res.json();
+    allCards = data.cards;
+    const newCurrent = allCards.find(c => c.id === currentId);
+    if (newCurrent) {
+        const idxInFiltered = filteredCards.findIndex(c => c.id === currentId);
+        if (idxInFiltered !== -1) filteredCards[idxInFiltered] = newCurrent;
+    }
+    
+    const wasFlipped = els.card.classList.contains('flipped');
+    renderReview();
+    if (wasFlipped) els.card.classList.add('flipped');
 }
 
 async function toggleEditMode(e) {
     if (e) e.stopPropagation();
+    const wasFlipped = els.card.classList.contains('flipped');
     isEditingCard = !isEditingCard;
     
     if (isEditingCard) {
-        els.editBtn.classList.add('editing');
-        els.editBtn.innerHTML = '<i class="fas fa-save"></i>';
+        [els.editBtn, els.editBtnFront].forEach(btn => {
+            btn.classList.add('editing');
+            btn.innerHTML = '<i class="fas fa-save"></i>';
+        });
         toggleEditVisibility(true);
-        els.aEdit.focus();
+        if (wasFlipped) {
+            els.aEdit.focus();
+        } else {
+            els.qEdit.focus();
+        }
     } else {
-        els.editBtn.classList.remove('editing');
-        els.editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        [els.editBtn, els.editBtnFront].forEach(btn => {
+            btn.classList.remove('editing');
+            btn.innerHTML = '<i class="fas fa-edit"></i>';
+        });
         toggleEditVisibility(false);
         await saveCardChanges();
+        if (wasFlipped) els.card.classList.add('flipped');
     }
 }
 
@@ -147,14 +317,16 @@ async function deleteCard() {
     await fetch(`/api/cards/${current.id}`, { method: 'DELETE' });
     allCards = allCards.filter(c => c.id !== current.id);
     applyFilters();
+    refreshStats();
 }
 
 async function saveCardChanges() {
     const current = filteredCards[currentIndex % filteredCards.length];
-    const body = { answer: els.aEdit.value, tips: els.tEdit.value };
-    
-    els.aDisplay.innerText = body.answer;
-    els.tDisplay.innerText = body.tips || "No tips added.";
+    const body = { 
+        question: els.qEdit.value,
+        answer: els.aEdit.value, 
+        tips: els.tEdit.value 
+    };
     
     await fetch(`/api/cards/${current.id}/update`, {
         method: 'POST',
@@ -162,17 +334,22 @@ async function saveCardChanges() {
         body: JSON.stringify(body)
     });
     
+    current.question = body.question;
     current.answer = body.answer;
     current.tips = body.tips;
     
     const original = allCards.find(c => c.id === current.id);
     if (original) {
+        original.question = body.question;
         original.answer = body.answer;
         original.tips = body.tips;
     }
+    
+    const wasFlipped = els.card.classList.contains('flipped');
+    renderReview();
+    if (wasFlipped) els.card.classList.add('flipped');
 }
 
-// --- JIKOSHOUKAI ---
 let saveTimeout;
 els.jikoshoukai.oninput = () => {
     clearTimeout(saveTimeout);
@@ -185,63 +362,8 @@ els.jikoshoukai.oninput = () => {
     }, 1000);
 };
 
-// --- NOTES ---
-function renderNotes() {
-    els.notesList.innerHTML = notes.map(n => `
-        <div class="note-card" onclick="openNote(${n.id})">
-            <h3>${n.title || 'Untitled'}</h3>
-            <p>${n.content || ''}</p>
-        </div>
-    `).join('');
-}
-
-function openNote(id = null) {
-    currentNoteId = id;
-    if (id) {
-        const n = notes.find(note => note.id === id);
-        els.noteTitle.value = n.title;
-        els.noteBody.value = n.content;
-        document.getElementById('modal-delete-btn').style.display = "block";
-    } else {
-        els.noteTitle.value = "";
-        els.noteBody.value = "";
-        document.getElementById('modal-delete-btn').style.display = "none";
-    }
-    els.noteModal.style.display = "block";
-}
-
-document.getElementById('add-note-btn').onclick = () => openNote();
-document.getElementById('modal-close-btn').onclick = () => els.noteModal.style.display = "none";
-
-document.getElementById('modal-save-btn').onclick = async () => {
-    const body = { title: els.noteTitle.value, content: els.noteBody.value };
-    if (currentNoteId) {
-        await fetch(`/api/notes/${currentNoteId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-    } else {
-        await fetch('/api/notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-    }
-    els.noteModal.style.display = "none";
-    await fetchNotes();
-};
-
-document.getElementById('modal-delete-btn').onclick = async () => {
-    if (!confirm("Hapus catatan ini?")) return;
-    await fetch(`/api/notes/${currentNoteId}`, { method: 'DELETE' });
-    els.noteModal.style.display = "none";
-    await fetchNotes();
-};
-
-// --- EVENT LISTENERS ---
 document.getElementById('card').onclick = (e) => {
-    if (!['TEXTAREA', 'BUTTON', 'I'].includes(e.target.tagName)) {
+    if (!['TEXTAREA', 'BUTTON', 'I'].includes(e.target.tagName) && !e.target.classList.contains('del-bubble')) {
         els.card.classList.toggle('flipped');
     }
 };
@@ -250,6 +372,12 @@ document.getElementById('btn-hafal').onclick = () => updateStatus(1);
 document.getElementById('btn-belum').onclick = () => updateStatus(0);
 document.getElementById('delete-card-btn').onclick = (e) => { e.stopPropagation(); deleteCard(); };
 document.getElementById('edit-card-btn').onclick = toggleEditMode;
+document.getElementById('edit-card-btn-front').onclick = toggleEditMode;
+document.getElementById('add-follow-q').onclick = (e) => { e.stopPropagation(); openFollowUpModal('q'); };
+document.getElementById('add-follow-a').onclick = (e) => { e.stopPropagation(); openFollowUpModal('a'); };
+
+els.fuSave.onclick = saveFollowUp;
+els.fuClose.onclick = () => els.fuModal.style.display = "none";
 
 document.getElementById('shuffle-btn').onclick = () => {
     filteredCards.sort(() => Math.random() - 0.5);

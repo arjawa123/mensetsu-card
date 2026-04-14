@@ -32,6 +32,18 @@ db.serialize(() => {
             value TEXT
         )
     `);
+
+    // Follow-ups table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS follow_ups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            card_id INTEGER,
+            content TEXT NOT NULL,
+            type TEXT CHECK(type IN ('q', 'a')),
+            sort_order INTEGER,
+            FOREIGN KEY(card_id) REFERENCES cards(id) ON DELETE CASCADE
+        )
+    `);
     
     db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('jikoshoukai', 'Edit your Jikoshoukai here...')");
 });
