@@ -1,0 +1,47 @@
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+
+const db = new sqlite3.Database(path.join(__dirname, 'database.db'));
+
+db.serialize(() => {
+    // Cards table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS cards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            question TEXT NOT NULL,
+            answer TEXT NOT NULL,
+            tips TEXT,
+            status INTEGER DEFAULT 0
+        )
+    `);
+
+    // Notes table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS notes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            content TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+
+    // Settings/Single values table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    `);
+    
+    db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('jikoshoukai', 'Edit your Jikoshoukai here...')");
+});
+
+const query = (sql, params = []) => new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows));
+});
+
+const run = (sql, params = []) => new Promise((resolve, reject) => {
+    db.run(sql, params, function(err) { err ? reject(err) : resolve(this); });
+});
+
+module.exports = { db, query, run };
