@@ -4,14 +4,25 @@ const path = require('path');
 const db = new sqlite3.Database(path.join(__dirname, 'database.db'));
 
 db.serialize(() => {
+    // Users table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    `);
+
     // Cards table
     db.run(`
         CREATE TABLE IF NOT EXISTS cards (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             question TEXT NOT NULL,
             answer TEXT NOT NULL,
             tips TEXT,
-            status INTEGER DEFAULT 0
+            status INTEGER DEFAULT 0,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `);
 
@@ -19,17 +30,22 @@ db.serialize(() => {
     db.run(`
         CREATE TABLE IF NOT EXISTS notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             title TEXT,
             content TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `);
 
     // Settings/Single values table
     db.run(`
         CREATE TABLE IF NOT EXISTS settings (
-            key TEXT PRIMARY KEY,
-            value TEXT
+            user_id INTEGER,
+            key TEXT,
+            value TEXT,
+            PRIMARY KEY (user_id, key),
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `);
 
@@ -44,8 +60,8 @@ db.serialize(() => {
             FOREIGN KEY(card_id) REFERENCES cards(id) ON DELETE CASCADE
         )
     `);
-    
-    db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('jikoshoukai', 'Edit your Jikoshoukai here...')");
+
+    // db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('jikoshoukai', 'Edit your Jikoshoukai here...')");
 });
 
 const query = (sql, params = []) => new Promise((resolve, reject) => {
@@ -53,7 +69,7 @@ const query = (sql, params = []) => new Promise((resolve, reject) => {
 });
 
 const run = (sql, params = []) => new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) { err ? reject(err) : resolve(this); });
+    db.run(sql, params, function (err) { err ? reject(err) : resolve(this); });
 });
 
 module.exports = { db, query, run };

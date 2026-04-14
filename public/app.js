@@ -1,3 +1,18 @@
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/login.html';
+
+const originalFetch = window.fetch;
+window.fetch = async function (url, options = {}) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = 'Bearer ' + localStorage.getItem('token');
+    const res = await originalFetch(url, options);
+    if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+    }
+    return res;
+};
+
 let allCards = [];
 let filteredCards = [];
 let currentIndex = 0;
@@ -463,6 +478,11 @@ document.getElementById('shuffle-btn').onclick = () => {
 
 document.getElementById('reset-btn').onclick = async () => {
     if (confirm("Reset progress?")) { await fetch('/api/reset', { method: 'POST' }); location.reload(); }
+};
+
+document.getElementById('logout-btn').onclick = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login.html';
 };
 
 init();
