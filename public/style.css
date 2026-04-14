@@ -11,8 +11,8 @@
     --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
     --bubble-left: #334155;
     --bubble-right: #075e54;
-    --header-height: 56px;
-    --tabbar-height: 68px;
+    --header-height: 48px;
+    --tabbar-height: 64px;
 }
 
 body.light-mode {
@@ -199,7 +199,7 @@ body.light-mode .tab-bar {
    REVIEW TAB
 ===================== */
 .header {
-    padding: 10px 16px 6px;
+    padding: 6px 16px 4px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -255,7 +255,7 @@ body.light-mode .tab-bar {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 16px;
+    padding: 0px 12px;
     perspective: 1000px;
     min-height: 0;
 }
@@ -264,7 +264,7 @@ body.light-mode .tab-bar {
     width: 100%;
     max-width: 420px;
     height: 100%;
-    max-height: 450px;
+    max-height: 420px;
     position: relative;
     transform-style: preserve-3d;
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -280,7 +280,7 @@ body.light-mode .tab-bar {
     backface-visibility: hidden;
     background: var(--surface);
     border-radius: 24px;
-    padding: 20px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -301,7 +301,7 @@ body.light-mode .face {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 20px 0;
+    padding: 12px 0 16px;
 }
 
 .jp-text {
@@ -319,22 +319,35 @@ body.light-mode .face {
     margin-top: 8px;
 }
 
+/* Kedua header overlay absolute, tidak memakan vertical space */
 .back-header,
 .front-header {
+    position: absolute;
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 6px;
+    align-items: center;
     gap: 8px;
     backface-visibility: hidden;
     transform: translateZ(2px);
     z-index: 100;
 }
 
+/* NOTCH style untuk back-header (sisi belakang kartu) */
+.back-header {
+    top: 0;
+    right: 0;
+    background: #0f172a;
+    /* solid dark-red */
+    border-bottom-left-radius: 16px;
+    border-top-right-radius: 24px;
+    /* sesuai border-radius kartu */
+    padding: 5px 8px;
+}
+
+
 .front-header {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    z-index: 10;
+    top: 12px;
+    right: 12px;
 }
 
 /* =====================
@@ -343,6 +356,8 @@ body.light-mode .face {
 .scroll-area {
     flex: 1;
     overflow-y: auto;
+    padding-top: 4px;
+    /* Bubble tidak tertutup oleh back-header absolute */
     scrollbar-width: thin;
     scrollbar-color: var(--primary-muted) transparent;
 }
@@ -363,14 +378,14 @@ body.light-mode .face {
 .chat-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 6px 0;
+    gap: 8px;
+    padding: 4px 0;
 }
 
 .bubble {
-    max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 18px;
+    max-width: 88%;
+    padding: 8px 12px;
+    border-radius: 14px;
     font-size: 14px;
     line-height: 1.5;
     position: relative;
@@ -631,8 +646,8 @@ body.light-mode .tips-display {
 .status-actions-nav {
     display: flex;
     flex-direction: column;
-    padding: 10px 16px 20px;
-    gap: 12px;
+    padding: 8px 16px 12px;
+    gap: 8px;
     background: var(--bg);
     flex-shrink: 0;
 }
@@ -706,20 +721,23 @@ body.light-mode .tips-display {
    ICON BUTTONS
 ===================== */
 .icon-btn {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border-radius: 10px;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
+    transition: all 0.2s;
+    background: var(--surface2);
+    color: var(--text-muted);
 }
 
 .icon-btn.primary-btn {
-    background: var(--primary-muted);
-    color: var(--primary);
+    background: var(--surface2);
+    color: var(--text-muted);
 }
 
 .icon-btn.primary-btn.editing {
@@ -728,9 +746,11 @@ body.light-mode .tips-display {
 }
 
 .icon-btn.danger {
-    background: rgba(239, 68, 68, 0.1);
+    background: transparent;
     color: var(--danger);
+    font-size: 15px;
 }
+
 
 /* =====================
    JIKOSHOUKAI TAB
