@@ -1,0 +1,210 @@
+:root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --primary: #38bdf8;
+    --primary-muted: rgba(56, 189, 248, 0.1);
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: var(--bg);
+}
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text);
+}
+
+#app { 
+    display: flex; 
+    flex-direction: column; 
+    height: 100%; /* Fallback */
+    height: 100dvh; /* Dynamic height for mobile browsers */
+    width: 100vw; 
+}
+
+/* Content Area - Fills middle */
+.content-area { 
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.view { 
+    flex: 1;
+    display: none; 
+    flex-direction: column; 
+    overflow: hidden;
+}
+.view.active { display: flex; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* NAVIGATION TAB BAR - FIXED AT BOTTOM FLOW */
+.tab-bar {
+    display: flex; 
+    height: 75px; 
+    background: #020617; /* Darker for better visibility */
+    border-top: 1px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 1000;
+}
+
+.tab-item {
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    background: transparent; 
+    border: none; 
+    color: var(--text-muted); 
+    gap: 4px;
+    padding: 0;
+    cursor: pointer;
+}
+.tab-item i { font-size: 22px; }
+.tab-item span { font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.tab-item.active { 
+    color: var(--primary); 
+    background: rgba(56, 189, 248, 0.05);
+}
+
+/* Review Header */
+.header { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+.stats { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; }
+.hafal-badge { background: var(--primary-muted); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 11px; }
+.actions button { background: var(--surface); border: none; color: white; width: 34px; height: 34px; border-radius: 10px; margin-left: 5px; }
+
+/* Review Card Container */
+.card-container { 
+    flex: 1; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    padding: 10px 15px; 
+    perspective: 1000px;
+    min-height: 0;
+}
+.card {
+    width: 100%; max-width: 400px; height: 100%; max-height: 460px;
+    position: relative; transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card.flipped { transform: rotateY(180deg); }
+
+.face {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    background: var(--surface); border-radius: 24px; padding: 25px;
+    display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: var(--card-shadow);
+}
+.face.back { transform: rotateY(180deg); }
+
+.q-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; }
+.jp-text { font-size: 24px; font-weight: 700; line-height: 1.5; }
+.card-hint { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+
+/* Edit / Mode Logic */
+.hidden { display: none !important; }
+.back-header { display: flex; justify-content: flex-end; margin-bottom: 8px; gap: 8px; }
+.scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
+.scroll-area::-webkit-scrollbar { width: 3px; }
+.scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+.field-group { margin-bottom: 15px; }
+.field-group label { display: block; font-size: 10px; color: var(--primary); font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }
+.jp-display, .tips-display { padding: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; white-space: pre-wrap; line-height: 1.6; }
+.jp-display { font-size: 17px; }
+.tips-display { font-size: 13px; color: var(--text-muted); }
+
+.jp-edit, .tips-edit {
+    width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--primary);
+    border-radius: 10px; padding: 10px; color: white; font-size: 16px; resize: none;
+}
+.jp-edit { min-height: 120px; }
+.tips-edit { min-height: 70px; }
+
+/* Review Navigation - Big Status Buttons */
+.status-actions-nav { 
+    display: flex; 
+    padding: 10px 20px 25px; 
+    gap: 15px; 
+    align-items: center;
+    background: var(--bg);
+    flex-shrink: 0;
+}
+
+.status-nav-btn { 
+    flex: 1; 
+    padding: 18px; 
+    border: none; 
+    border-radius: 20px; 
+    font-weight: 800; 
+    color: white; 
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: transform 0.1s;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.status-nav-btn:active { transform: scale(0.96); }
+
+.status-nav-btn.belum { 
+    background: #334155; 
+}
+
+.status-nav-btn.hafal { 
+    background: var(--success); 
+    box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.2);
+}
+
+/* Icon Buttons */
+.icon-btn { width: 36px; height: 36px; border-radius: 10px; border: none; display: flex; align-items: center; justify-content: center; }
+.icon-btn.primary-btn { background: var(--primary-muted); color: var(--primary); }
+.icon-btn.primary-btn.editing { background: var(--primary); color: var(--bg); }
+.icon-btn.danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+/* Jikoshoukai */
+.view-header { padding: 20px 20px 5px; flex-shrink: 0; }
+.view-header h1 { margin: 0; font-size: 22px; }
+.editor-container { flex: 1; display: flex; flex-direction: column; padding: 15px; min-height: 0; }
+#jikoshoukai-editor {
+    flex: 1; background: var(--surface); border: none; border-radius: 20px; padding: 20px; color: white;
+    font-size: 17px; line-height: 1.6; resize: none;
+}
+.save-status { font-size: 11px; color: var(--text-muted); padding: 10px; text-align: center; }
+
+/* Notes */
+.notes-grid { flex: 1; overflow-y: auto; padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start; }
+.note-card { background: var(--surface); border-radius: 15px; padding: 15px; height: 140px; display: flex; flex-direction: column; }
+.note-card h3 { margin: 0 0 5px; font-size: 14px; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.note-card p { margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+.fab { background: var(--primary); border: none; width: 40px; height: 40px; border-radius: 12px; color: var(--bg); font-size: 18px; }
+
+/* Modal */
+.modal { display: none; position: fixed; inset: 0; z-index: 20000; background: rgba(0,0,0,0.8); }
+.modal-content { background: var(--surface); margin: 5vh auto; padding: 20px; width: 90%; max-width: 450px; border-radius: 24px; }
+.modal-header { display: flex; gap: 10px; margin-bottom: 15px; }
+#note-title { flex: 1; background: transparent; border: none; color: white; font-size: 18px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.1); }
+#note-body { width: 100%; height: 300px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; color: white; font-size: 15px; line-height: 1.5; resize: none; }
+.modal-footer { display: flex; gap: 10px; margin-top: 15px; }
+.modal-footer button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 700; font-size: 13px; }
+.btn-primary { background: var(--primary); color: var(--bg); }
+.btn-secondary { background: #334155; color: white; }

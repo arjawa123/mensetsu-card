@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mensetsu Master</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- TABS CONTENT -->
+        <main class="content-area">
+            <!-- REVIEW TAB -->
+            <div id="view-review" class="view active">
+                <div class="header">
+                    <div class="stats">
+                        <span id="progress-text">0 / 0</span>
+                        <div class="hafal-badge"><i class="fas fa-check-circle"></i> <span id="hafal-count">0</span></div>
+                    </div>
+                    <div class="actions">
+                        <button id="shuffle-btn" title="Shuffle"><i class="fas fa-random"></i></button>
+                        <button id="reset-btn" title="Reset Progress"><i class="fas fa-redo"></i></button>
+                    </div>
+                </div>
+
+                <div class="card-container">
+                    <div class="card" id="card">
+                        <div class="face front">
+                            <div class="q-wrapper">
+                                <div id="q-content" class="jp-text"></div>
+                            </div>
+                            <div class="card-hint"><i class="fas fa-hand-pointer"></i> Tap to flip</div>
+                        </div>
+                        <div class="face back">
+                            <div class="back-header">
+                                <button id="edit-card-btn" class="icon-btn primary-btn"><i class="fas fa-edit"></i></button>
+                                <button id="delete-card-btn" class="icon-btn danger"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                            <div class="scroll-area">
+                                <div class="field-group">
+                                    <label><i class="fas fa-comment-dots"></i> 回答 (Jawaban)</label>
+                                    <div id="a-display" class="jp-display"></div>
+                                    <textarea id="a-content" class="jp-edit hidden" placeholder="Tulis jawaban..."></textarea>
+                                </div>
+                                <div class="field-group">
+                                    <label><i class="fas fa-lightbulb"></i> Tips & Vocab</label>
+                                    <div id="t-display" class="tips-display"></div>
+                                    <textarea id="t-content" class="tips-edit hidden" placeholder="Tambahkan tips..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-actions-nav">
+                    <button id="btn-belum" class="status-nav-btn belum"><i class="fas fa-times"></i> Belum</button>
+                    <button id="btn-hafal" class="status-nav-btn hafal"><i class="fas fa-check"></i> Hafal</button>
+                </div>
+            </div>
+
+            <!-- JIKOSHOUKAI TAB -->
+            <div id="view-jikoshoukai" class="view">
+                <div class="view-header">
+                    <h1>自己紹介</h1>
+                    <p>Self Introduction</p>
+                </div>
+                <div class="editor-container">
+                    <textarea id="jikoshoukai-editor" placeholder="Tulis jikoshoukai anda di sini..."></textarea>
+                    <div class="save-status"><i class="fas fa-cloud-upload-alt"></i> Auto-saving...</div>
+                </div>
+            </div>
+
+            <!-- NOTES TAB -->
+            <div id="view-notes" class="view">
+                <div class="view-header">
+                    <h1>Catatan</h1>
+                    <button id="add-note-btn" class="fab"><i class="fas fa-plus"></i></button>
+                </div>
+                <div id="notes-list" class="notes-grid"></div>
+            </div>
+        </main>
+
+        <!-- NAVIGATION TAB BAR -->
+        <nav class="tab-bar">
+            <button class="tab-item active" data-target="view-review">
+                <i class="fas fa-layer-group"></i>
+                <span>Review</span>
+            </button>
+            <button class="tab-item" data-target="view-jikoshoukai">
+                <i class="fas fa-id-card"></i>
+                <span>Intro</span>
+            </button>
+            <button class="tab-item" data-target="view-notes">
+                <i class="fas fa-sticky-note"></i>
+                <span>Notes</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- NOTE MODAL -->
+    <div id="note-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <input type="text" id="note-title" placeholder="Judul Catatan">
+                <button id="modal-delete-btn" class="icon-btn danger"><i class="fas fa-trash"></i></button>
+            </div>
+            <textarea id="note-body" placeholder="Tulis sesuatu..."></textarea>
+            <div class="modal-footer">
+                <button id="modal-close-btn" class="btn-secondary">Close</button>
+                <button id="modal-save-btn" class="btn-primary">Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
