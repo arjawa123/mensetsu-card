@@ -256,7 +256,7 @@ body.light-mode .tab-bar {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 0px 12px;
+    padding: 12px;
     perspective: 1000px;
     min-height: 0;
     gap: 16px;
@@ -266,7 +266,7 @@ body.light-mode .tab-bar {
     width: 100%;
     max-width: 420px;
     height: 100%;
-    max-height: 420px;
+    max-height: 600px;
     position: relative;
     transform-style: preserve-3d;
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -672,75 +672,77 @@ body.light-mode .tips-display {
 .status-actions-nav {
     display: flex;
     flex-direction: column;
-    padding: 8px 16px 12px;
-    gap: 8px;
+    padding: 12px 20px 20px;
     background: var(--bg);
     flex-shrink: 0;
 }
 
 .main-actions {
     display: flex;
-    gap: 10px;
+    justify-content: center;
+    align-items: center;
     width: 100%;
+    gap: 20px;
+}
+
+.secondary-actions {
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 30px;
 }
 
 .status-nav-btn {
-    flex: 1;
-    padding: 16px;
+    width: 64px;
+    height: 64px;
     border: none;
-    border-radius: 18px;
+    border-radius: 50%;
     font-weight: 800;
     color: white;
-    font-size: 15px;
+    font-size: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
     cursor: pointer;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
-    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .status-nav-btn:active {
-    transform: scale(0.97);
-    box-shadow: none;
+    transform: scale(0.85);
 }
 
 .status-nav-btn.belum {
-    background: var(--danger);
+    background: #ff4757;
 }
 
 .status-nav-btn.hafal {
-    background: var(--success);
+    background: #2ed573;
 }
 
-/* Shuffle + Reset mini buttons above hafal/belum */
-.card-controls {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap: 12px;
-    flex-shrink: 0;
-}
-
-.mid-controls {
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
-
-.card-controls button {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+.nav-extra-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
     border: none;
-    background: var(--surface);
+    background: transparent;
     color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: all 0.2s;
+}
+
+.nav-extra-btn:hover {
+    color: var(--primary);
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.nav-extra-btn:active {
+    transform: scale(0.9);
 }
 
 .card-controls button:hover {
