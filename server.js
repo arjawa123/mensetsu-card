@@ -89,7 +89,10 @@ parseData().catch(console.error);
 // Cards
 app.get('/api/cards', auth, async (req, res) => {
     try {
-        const cards = await query("SELECT * FROM cards WHERE user_id = ?", [req.user.user_id]);
+        const cards = await query(
+            "SELECT * FROM cards WHERE user_id = ? ORDER BY is_starred DESC, id ASC",
+            [req.user.user_id]
+        );
         const followUps = await query("SELECT f.* FROM follow_ups f JOIN cards c ON f.card_id = c.id WHERE c.user_id = ? ORDER BY sort_order ASC", [req.user.user_id]);
         const jikoshoukaiRows = await query("SELECT value FROM settings WHERE key = 'jikoshoukai' AND user_id = ?", [req.user.user_id]);
 
@@ -134,6 +137,26 @@ app.post('/api/cards/:id/status', auth, async (req, res) => {
     try {
         await run("UPDATE cards SET status = ? WHERE id = ? AND user_id = ?", [req.body.status, req.params.id, req.user.user_id]);
         res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cards/:id/archive', auth, async (req, res) => {
+    try {
+        const rows = await query("SELECT is_archived FROM cards WHERE id = ? AND user_id = ?", [req.params.id, req.user.user_id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Card not found' });
+        const newVal = rows[0].is_archived ? 0 : 1;
+        await run("UPDATE cards SET is_archived = ? WHERE id = ? AND user_id = ?", [newVal, req.params.id, req.user.user_id]);
+        res.json({ success: true, is_archived: newVal });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/cards/:id/star', auth, async (req, res) => {
+    try {
+        const rows = await query("SELECT is_starred FROM cards WHERE id = ? AND user_id = ?", [req.params.id, req.user.user_id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Card not found' });
+        const newVal = rows[0].is_starred ? 0 : 1;
+        await run("UPDATE cards SET is_starred = ? WHERE id = ? AND user_id = ?", [newVal, req.params.id, req.user.user_id]);
+        res.json({ success: true, is_starred: newVal });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

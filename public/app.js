@@ -19,6 +19,7 @@ let currentIndex = 0;
 let isEditingCardBack = false;
 let isEditingJikoshoukai = false;
 let sessionHistory = []; // Track { cardId, wasBelum } to allow undo
+let currentManagementFilter = 'aktif'; // Filter card management: 'semua' | 'aktif' | 'arsip' | 'starred'
 
 // Persist session state across page refreshes
 const savedBelum = JSON.parse(localStorage.getItem('sessionBelumIds') || '[]');
@@ -198,34 +199,107 @@ async function refreshStats() {
 }
 
 function renderManagementList() {
-    const query = els.cardSearch.value.toLowerCase();
-    const filtered = allCards.filter(c =>
-        c.question.toLowerCase().includes(query) ||
-        c.answer.toLowerCase().includes(query)
+    const searchQuery = els.cardSearch.value.toLowerCase();
+
+    // Filter berdasarkan tab aktif
+    let source;
+    if (currentManagementFilter === 'starred') {
+        source = allCards.filter(c => c.is_starred);
+    } else if (currentManagementFilter === 'arsip') {
+        source = allCards.filter(c => c.is_archived);
+    } else if (currentManagementFilter === 'aktif') {
+        source = allCards.filter(c => !c.is_archived);
+    } else {
+        source = [...allCards];
+    }
+
+    const filtered = source.filter(c =>
+        c.question.toLowerCase().includes(searchQuery) ||
+        c.answer.toLowerCase().includes(searchQuery)
     );
 
-    els.cardsList.innerHTML = filtered.map(c => `
-        <div class="m-card">
+    // Update tab aktif
+    document.querySelectorAll('.m-filter-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.filter === currentManagementFilter);
+    });
+
+    if (filtered.length === 0) {
+        els.cardsList.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Tidak ada kartu ditemukan</p></div>`;
+        return;
+    }
+
+    els.cardsList.innerHTML = filtered.map(c => {
+        const archivedClass = c.is_archived ? ' archived' : '';
+        const starredClass = c.is_starred ? ' starred-active' : '';
+        const archiveIcon = c.is_archived ? 'fa-box-open' : 'fa-archive';
+        const archiveTitle = c.is_archived ? 'Unarsip' : 'Arsip';
+        return `
+        <div class="m-card${archivedClass}" onclick="editFromList(${c.id})">
             <div class="m-card-info">
+                <div class="m-card-meta">
+                    ${c.is_starred ? '<span class="m-star-badge"><i class="fas fa-star"></i></span>' : ''}
+                    ${c.is_archived ? '<span class="m-archived-badge"><i class="fas fa-archive"></i> Arsip</span>' : ''}
+                </div>
                 <h3>${c.question}</h3>
                 <p>${c.answer}</p>
             </div>
-            <div class="m-card-actions">
-                <button class="m-card-btn edit" onclick="editFromList(${c.id})"><i class="fas fa-eye"></i></button>
-                <button class="m-card-btn delete" onclick="deleteFromList(${c.id})"><i class="fas fa-trash"></i></button>
+            <div class="m-card-actions" onclick="event.stopPropagation()">
+                <button class="m-card-btn star${starredClass}" onclick="starCard(${c.id})" title="${c.is_starred ? 'Unstar' : 'Tandai prioritas'}">
+                    <i class="${c.is_starred ? 'fas' : 'far'} fa-star"></i>
+                </button>
+                <button class="m-card-btn archive" onclick="archiveCard(${c.id})" title="${archiveTitle}">
+                    <i class="fas ${archiveIcon}"></i>
+                </button>
+                <button class="m-card-btn delete" onclick="deleteFromList(${c.id})" title="Hapus">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
+}
+
+function setManagementFilter(filter) {
+    currentManagementFilter = filter;
+    renderManagementList();
 }
 
 function editFromList(id) {
     const idx = allCards.findIndex(c => c.id === id);
     if (idx !== -1) {
-        filteredCards = [...allCards];
-        currentIndex = idx;
+        filteredCards = allCards.filter(c => !c.is_archived && c.status === 0);
+        // Cari card ini di filteredCards, jika archived tidak masuk review
+        const filteredIdx = filteredCards.findIndex(c => c.id === id);
+        if (filteredIdx !== -1) {
+            currentIndex = filteredIdx;
+        } else {
+            // Card diarsipkan atau sudah hafal, buka dengan memuat semua
+            filteredCards = [...allCards];
+            currentIndex = allCards.findIndex(c => c.id === id);
+        }
         renderReview();
         document.querySelector('.tab-item[data-target="view-review"]').click();
     }
+}
+
+async function archiveCard(id) {
+    const res = await fetch(`/api/cards/${id}/archive`, { method: 'POST' });
+    const data = await res.json();
+    const card = allCards.find(c => c.id === id);
+    if (card) card.is_archived = data.is_archived;
+    applyFilters();
+    renderManagementList();
+    showToast(data.is_archived ? 'Kartu diarsipkan' : 'Kartu diaktifkan kembali', data.is_archived ? 'info' : 'success');
+}
+
+async function starCard(id) {
+    const res = await fetch(`/api/cards/${id}/star`, { method: 'POST' });
+    const data = await res.json();
+    const card = allCards.find(c => c.id === id);
+    if (card) card.is_starred = data.is_starred;
+    // Re-sort allCards: starred di atas
+    allCards.sort((a, b) => (b.is_starred || 0) - (a.is_starred || 0));
+    renderManagementList();
+    showToast(data.is_starred ? '★ Ditandai sebagai prioritas' : 'Bintang dihapus', 'info');
 }
 
 async function deleteFromList(id) {
@@ -287,7 +361,7 @@ async function showModal(msg, title = "Notification", showCancel = false) {
 }
 
 function applyFilters() {
-    filteredCards = allCards.filter(c => c.status === 0);
+    filteredCards = allCards.filter(c => c.status === 0 && !c.is_archived);
     currentIndex = 0;
     // Note: jangan clear sessionBelumIds di sini agar counter persist saat refresh
     if (filteredCards.length === 0 && allCards.length > 0) {
@@ -388,6 +462,22 @@ function renderReview() {
     if (hasTips) {
         const vocabWords = extractVocabWords(current.tips);
         applyVocabHighlight(vocabWords);
+    }
+
+    // Inject star button ke front card secara dinamis
+    const frontHeader = document.querySelector('.face.front .front-header');
+    if (frontHeader) {
+        let starBtn = document.getElementById('star-card-btn-front');
+        if (!starBtn) {
+            starBtn = document.createElement('button');
+            starBtn.id = 'star-card-btn-front';
+            starBtn.className = 'icon-btn star-btn-front';
+            starBtn.title = 'Tandai Prioritas';
+            starBtn.onclick = (e) => toggleStarCurrent(e);
+            frontHeader.insertBefore(starBtn, frontHeader.firstChild);
+        }
+        starBtn.className = `icon-btn star-btn-front${current.is_starred ? ' starred' : ''}`;
+        starBtn.innerHTML = `<i class="${current.is_starred ? 'fas' : 'far'} fa-star"></i>`;
     }
 
     els.card.classList.remove('flipped');
@@ -870,5 +960,45 @@ document.getElementById('undo-btn').onclick = async () => {
     saveSession();
     renderReview();
 };
+
+// --- TOAST NOTIFICATION ---
+function showToast(message, type = 'info') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = message;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+// --- TOGGLE STAR DARI FRONT CARD ---
+async function toggleStarCurrent(e) {
+    if (e) e.stopPropagation();
+    const current = filteredCards[currentIndex % filteredCards.length];
+    if (!current) return;
+    const res = await fetch(`/api/cards/${current.id}/star`, { method: 'POST' });
+    const data = await res.json();
+    current.is_starred = data.is_starred;
+    const original = allCards.find(c => c.id === current.id);
+    if (original) original.is_starred = data.is_starred;
+    // Re-sort allCards
+    allCards.sort((a, b) => (b.is_starred || 0) - (a.is_starred || 0));
+    // Update visual star button
+    const starBtn = document.getElementById('star-card-btn-front');
+    if (starBtn) {
+        starBtn.classList.toggle('starred', !!data.is_starred);
+        starBtn.querySelector('i').className = data.is_starred ? 'fas fa-star' : 'far fa-star';
+    }
+    showToast(data.is_starred ? '★ Ditandai sebagai prioritas' : 'Bintang dihapus', 'info');
+}
 
 init();

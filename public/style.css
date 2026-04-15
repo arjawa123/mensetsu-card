@@ -253,11 +253,13 @@ body.light-mode .tab-bar {
 .card-container {
     flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 0px 12px;
     perspective: 1000px;
     min-height: 0;
+    gap: 16px;
 }
 
 .card {
@@ -695,6 +697,11 @@ body.light-mode .tips-display {
     justify-content: center;
     gap: 12px;
     flex-shrink: 0;
+}
+
+.mid-controls {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .card-controls button {
@@ -1357,5 +1364,234 @@ body.light-mode .result-actions .btn-secondary {
 
     .global-header {
         padding: 0 40px;
+    }
+}
+
+/* =====================
+   FILTER TABS - CARD MANAGEMENT
+===================== */
+.m-filter-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 6px 20px 10px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.m-filter-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.m-filter-tab {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.m-filter-tab:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.m-filter-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.m-filter-tab[data-filter="starred"].active {
+    background: #f59e0b;
+    border-color: #f59e0b;
+}
+
+.m-filter-tab[data-filter="arsip"].active {
+    background: var(--text-muted);
+    border-color: var(--text-muted);
+}
+
+/* =====================
+   CARD LIST - ARCHIVE & STAR
+===================== */
+.m-card {
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.2s;
+}
+
+.m-card:hover {
+    background: var(--surface2);
+}
+
+.m-card.archived {
+    opacity: 0.55;
+}
+
+.m-card.archived .m-card-info h3 {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.m-card-meta {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.m-star-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.m-archived-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(148, 163, 184, 0.15);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.m-card-btn.star {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+}
+
+.m-card-btn.star:hover,
+.m-card-btn.star.starred-active {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+}
+
+.m-card-btn.archive {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+}
+
+.m-card-btn.archive:hover {
+    color: var(--primary);
+    background: var(--primary-muted);
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+    gap: 12px;
+    opacity: 0.6;
+}
+
+.empty-state i {
+    font-size: 40px;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* =====================
+   STAR BUTTON - FRONT CARD
+===================== */
+.star-btn-front {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    font-size: 16px;
+    transition: color 0.2s, transform 0.15s;
+}
+
+.star-btn-front:hover {
+    color: #f59e0b;
+    transform: scale(1.2);
+}
+
+.star-btn-front.starred {
+    color: #f59e0b;
+}
+
+.star-btn-front.starred i {
+    filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5));
+}
+
+/* =====================
+   TOAST NOTIFICATION
+===================== */
+#toast-container {
+    position: fixed;
+    bottom: calc(var(--tabbar-height) + 16px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9999;
+    pointer-events: none;
+    align-items: center;
+}
+
+.toast {
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    background: #334155;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    white-space: nowrap;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.toast-success {
+    background: #16a34a;
+}
+
+.toast-info {
+    background: #0284c7;
+}
+
+.toast-warning {
+    background: #d97706;
+}
+
+.toast-danger {
+    background: #dc2626;
+}
+
+@media (min-width: 600px) {
+    .m-filter-tabs {
+        padding: 6px 60px 10px;
     }
 }
