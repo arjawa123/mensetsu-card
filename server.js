@@ -13,43 +13,29 @@ const JWT_SECRET = 'mensetsu-secret-key-123';
 const app = express();
 app.use(express.json());
 
-// Hash file untuk cache busting
-function fileHash(filePath) {
-    try {
-        const content = fs.readFileSync(filePath);
-        return crypto.createHash('md5').update(content).digest('hex').slice(0, 8);
-    } catch {
-        return Date.now().toString(36);
-    }
-}
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-// Sajikan static files dengan cache 1 tahun (browser cache baik)
-// Tapi index.html SELALU no-cache agar hash terbaru selalu dikirim
+// Generate versi aplikasi saat server hidup untuk cache busting
+const appVersion = Date.now().toString(36);
+
+// Sajikan static files dengan cache 1 tahun
 app.use(express.static(path.join(__dirname, 'public'), {
     etag: true,
-    maxAge: '1y',
-    setHeaders(res, filePath) {
-        if (filePath.endsWith('.html')) {
-            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-        }
-    }
+    index: false, // Jangan serve index.html statis
+    maxAge: '1y'
 }));
 
-// Sajikan index.html dengan cache-busting otomatis pada CSS & JS
+// Route Utama -> render index.ejs
 app.get(['/', '/index.html'], (req, res) => {
-    const htmlPath = path.join(__dirname, 'public', 'index.html');
-    let html = fs.readFileSync(htmlPath, 'utf8');
-
-    const cssHash = fileHash(path.join(__dirname, 'public', 'style.css'));
-    const jsHash = fileHash(path.join(__dirname, 'public', 'app.js'));
-
-    html = html
-        .replace('href="style.css"', `href="style.css?v=${cssHash}"`)
-        .replace('src="app.js"', `src="app.js?v=${jsHash}"`);
-
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(html);
+    res.render('index', { version: appVersion });
+});
+
+// Route Login -> render login.ejs
+app.get(['/login', '/login.html'], (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.render('login', { version: appVersion });
 });
 
 

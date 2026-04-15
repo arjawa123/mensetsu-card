@@ -194,11 +194,24 @@ document.querySelectorAll('.tab-item').forEach(btn => {
 els.cardSearch.oninput = () => renderManagementList();
 
 async function refreshStats() {
-    const res = await fetch('/api/stats');
-    const stats = await res.json();
-    els.statTotal.innerText = stats.total;
-    els.statHafal.innerText = stats.hafal;
-    els.statBelum.innerText = stats.belum;
+    try {
+        const res = await fetch('/api/stats');
+        const stats = await res.json();
+        els.statTotal.innerText = stats.total !== undefined ? stats.total : allCards.length;
+        els.statHafal.innerText = stats.hafal !== undefined ? stats.hafal : allCards.filter(c => c.status === 1 && !c.is_archived).length;
+
+        // Handle undefined 'belum' on hosting (backward compatibility or cache issue)
+        if (stats.belum !== undefined) {
+            els.statBelum.innerText = stats.belum;
+        } else {
+            els.statBelum.innerText = allCards.filter(c => c.status === 0 && !c.is_archived).length;
+        }
+    } catch (e) {
+        console.error("Gagal mengambil stats:", e);
+        els.statTotal.innerText = allCards.length;
+        els.statHafal.innerText = allCards.filter(c => c.status === 1 && !c.is_archived).length;
+        els.statBelum.innerText = allCards.filter(c => c.status === 0 && !c.is_archived).length;
+    }
 }
 
 function renderManagementList() {

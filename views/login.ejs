@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login - Mensetsu Master</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=<%= version %>">
     <style>
         body {
             display: flex;
@@ -80,7 +80,7 @@
         <button id="login-btn">Log In</button>
         <div id="error-msg" class="error hidden"></div>
     </div>
-    <script src="login.js"></script>
+    <script src="login.js?v=<%= version %>"></script>
 </body>
 
 </html>
