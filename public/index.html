@@ -176,24 +176,27 @@
                         <i class="fas fa-search search-icon"></i>
                         <input type="text" id="card-search" placeholder="Cari kartu...">
                     </div>
-                    <button id="add-card-btn" class="add-card-btn" title="Add New Card"><i
-                            class="fas fa-plus"></i></button>
                 </div>
                 <div class="m-filter-tabs">
-                    <button class="m-filter-tab active" data-filter="aktif" onclick="setManagementFilter('aktif')">
-                        <i class="fas fa-layer-group"></i> Aktif
+                    <button class="m-filter-tab active" data-filter="aktif" onclick="setManagementFilter('aktif')"
+                        title="Aktif">
+                        <i class="fas fa-layer-group"></i> <span class="tab-count" id="count-aktif">0</span>
                     </button>
-                    <button class="m-filter-tab" data-filter="starred" onclick="setManagementFilter('starred')">
-                        <i class="fas fa-star"></i> Starred
+                    <button class="m-filter-tab" data-filter="starred" onclick="setManagementFilter('starred')"
+                        title="Starred">
+                        <i class="fas fa-star"></i> <span class="tab-count" id="count-starred">0</span>
                     </button>
-                    <button class="m-filter-tab" data-filter="arsip" onclick="setManagementFilter('arsip')">
-                        <i class="fas fa-archive"></i> Arsip
+                    <button class="m-filter-tab" data-filter="arsip" onclick="setManagementFilter('arsip')"
+                        title="Arsip">
+                        <i class="fas fa-archive"></i> <span class="tab-count" id="count-arsip">0</span>
                     </button>
-                    <button class="m-filter-tab" data-filter="semua" onclick="setManagementFilter('semua')">
-                        <i class="fas fa-th-list"></i> Semua
+                    <button class="m-filter-tab" data-filter="semua" onclick="setManagementFilter('semua')"
+                        title="Semua">
+                        <i class="fas fa-th-list"></i> <span class="tab-count" id="count-semua">0</span>
                     </button>
                 </div>
                 <div id="cards-list" class="cards-management-list"></div>
+                <button id="add-card-btn" class="fab-btn" title="Add New Card"><i class="fas fa-plus"></i></button>
             </div>
         </main>
 

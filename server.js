@@ -178,8 +178,8 @@ app.post('/api/cards', auth, async (req, res) => {
 app.get('/api/stats', auth, async (req, res) => {
     try {
         const total = await query("SELECT COUNT(*) as count FROM cards WHERE user_id = ?", [req.user.user_id]);
-        const hafal = await query("SELECT COUNT(*) as count FROM cards WHERE status = 1 AND user_id = ?", [req.user.user_id]);
-        const followUps = await query("SELECT COUNT(*) as count FROM follow_ups f JOIN cards c ON f.card_id = c.id WHERE c.user_id = ?", [req.user.user_id]);
+        const hafal = await query("SELECT COUNT(*) as count FROM cards WHERE status = 1 AND user_id = ? AND is_archived = 0", [req.user.user_id]);
+        const followUps = await query("SELECT COUNT(*) as count FROM follow_ups f JOIN cards c ON f.card_id = c.id WHERE c.user_id = ? AND c.is_archived = 0", [req.user.user_id]);
         res.json({
             total: total[0].count,
             hafal: hafal[0].count,

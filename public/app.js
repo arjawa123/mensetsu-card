@@ -201,6 +201,12 @@ async function refreshStats() {
 function renderManagementList() {
     const searchQuery = els.cardSearch.value.toLowerCase();
 
+    // Update Counts
+    document.getElementById('count-semua').innerText = allCards.length;
+    document.getElementById('count-aktif').innerText = allCards.filter(c => !c.is_archived).length;
+    document.getElementById('count-starred').innerText = allCards.filter(c => c.is_starred).length;
+    document.getElementById('count-arsip').innerText = allCards.filter(c => !!c.is_archived).length;
+
     // Filter berdasarkan tab aktif
     let source;
     if (currentManagementFilter === 'starred') {
@@ -407,7 +413,8 @@ function renderReview() {
     document.querySelector('.status-actions-nav').classList.remove('hidden');
 
     const current = filteredCards[currentIndex];
-    els.progress.innerText = `${currentIndex + 1} / ${allCards.length}`;
+    const activeCount = allCards.filter(c => !c.is_archived).length;
+    els.progress.innerText = `${currentIndex + 1} / ${activeCount}`;
 
     els.q.innerText = formatQuestion(current.question);
     els.qEdit.value = current.question;
@@ -489,10 +496,18 @@ function toggleEditVisibility(editing) {
     const isFlipped = els.card.classList.contains('flipped');
 
     if (editing) {
+        // Sembunyikan star button saat editing
+        const starBtn = document.getElementById('star-card-btn-front');
+        if (starBtn) starBtn.classList.add('hidden');
+
         if (!isFlipped) {
             // FRONT EDIT MODE
+            isEditingCardFront = true;
             els.q.classList.add('hidden');
             els.qEdit.classList.remove('hidden');
+            els.editBtnFront.innerHTML = '<i class="fas fa-save"></i>';
+            els.editBtnFront.classList.add('editing');
+            els.qEdit.focus();
         } else {
             // BACK EDIT MODE
             els.chatBubbles.classList.add('editing-active'); // Utility class to hide elements if needed
@@ -515,7 +530,16 @@ function toggleEditVisibility(editing) {
         }
         document.getElementById('card').classList.add('editing');
     } else {
+        // Tampilkan kembali star button
+        const starBtn = document.getElementById('star-card-btn-front');
+        if (starBtn) starBtn.classList.remove('hidden');
+
         // READ MODE
+        isEditingCardBack = false;
+        isEditingCardFront = false;
+        els.editBtnFront.innerHTML = '<i class="fas fa-edit"></i>';
+        els.editBtnFront.classList.remove('editing');
+
         els.q.classList.remove('hidden');
         els.qEdit.classList.add('hidden');
 
