@@ -18,7 +18,7 @@ let filteredCards = [];
 let currentIndex = 0;
 let isEditingCardBack = false;
 let isEditingJikoshoukai = false;
-let sessionHistory = []; // Track { cardId, wasBelum } to allow undo
+let sessionHistory = JSON.parse(localStorage.getItem('sessionHistory') || '[]'); // Track { cardId, wasBelum } to allow undo
 let editingCardId = null;
 let currentManagementFilter = 'belum'; // Filter card management: 'hafal' | 'belum' | 'arsip' | 'starred'
 
@@ -28,13 +28,18 @@ let sessionBelumIds = new Set(savedBelum);
 
 function saveSession() {
     localStorage.setItem('sessionBelumIds', JSON.stringify([...sessionBelumIds]));
+    localStorage.setItem('sessionHistory', JSON.stringify(sessionHistory));
+    localStorage.setItem('sessionFilteredIds', JSON.stringify(filteredCards.map(c => c.id)));
     localStorage.setItem('sessionCurrentIndex', currentIndex);
 }
 
 function clearSession() {
     sessionBelumIds.clear();
+    sessionHistory = [];
     currentIndex = 0;
     localStorage.removeItem('sessionBelumIds');
+    localStorage.removeItem('sessionHistory');
+    localStorage.removeItem('sessionFilteredIds');
     localStorage.removeItem('sessionCurrentIndex');
 }
 
@@ -162,17 +167,7 @@ async function init() {
     allCards = data.cards;
     els.jikoshoukai.value = data.jikoshoukai || "";
 
-    // Restore session index if exists
-    const savedIndex = parseInt(localStorage.getItem('sessionCurrentIndex') || '0');
-
     applyFilters();
-
-    // Setelah filteredCards terisi, restore currentIndex jika masih valid
-    if (savedIndex > 0 && savedIndex < filteredCards.length) {
-        currentIndex = savedIndex;
-        renderReview();
-    }
-
     refreshStats();
 }
 
@@ -403,9 +398,25 @@ async function showModal(msg, title = "Notification", showCancel = false) {
 }
 
 function applyFilters() {
-    filteredCards = allCards.filter(c => c.status === 0 && !c.is_archived);
-    currentIndex = 0;
-    // Note: jangan clear sessionBelumIds di sini agar counter persist saat refresh
+    const savedFilteredIds = JSON.parse(localStorage.getItem('sessionFilteredIds'));
+
+    // Jika ada session yang tersimpan, gunakan itu agar urutan dan counter akurat
+    if (savedFilteredIds && savedFilteredIds.length > 0) {
+        filteredCards = savedFilteredIds.map(id => allCards.find(c => c.id === id)).filter(c => c && !c.is_archived);
+        currentIndex = parseInt(localStorage.getItem('sessionCurrentIndex') || '0');
+        // Prevent out of bounds if something changed
+        if (currentIndex >= filteredCards.length) {
+            currentIndex = 0;
+            localStorage.setItem('sessionCurrentIndex', '0');
+        }
+    } else {
+        // Mode normal: ambil yang benar-benar belum hafal
+        filteredCards = allCards.filter(c => c.status === 0 && !c.is_archived);
+        currentIndex = 0;
+        localStorage.setItem('sessionFilteredIds', JSON.stringify(filteredCards.map(c => c.id)));
+        localStorage.setItem('sessionCurrentIndex', '0');
+    }
+
     if (filteredCards.length === 0 && allCards.length > 0) {
         showResultScreen();
     } else {
@@ -427,10 +438,10 @@ function renderReview() {
     toggleEditVisibility(false);
 
     const totalReview = filteredCards.length;
-    const hafalTotalCount = allCards.filter(c => c.status === 1 && !c.is_archived).length;
+    const hafalSessionCount = sessionHistory.filter(h => !h.wasBelum).length;
     const belumSessionCount = sessionBelumIds.size;
 
-    els.hafalBadge.innerText = hafalTotalCount;
+    els.hafalBadge.innerText = hafalSessionCount;
     els.belumBadge.innerText = belumSessionCount;
 
     // Pastikan currentIndex tidak melebihi batas
@@ -905,20 +916,21 @@ async function updateStatus(status) {
 }
 
 function showResultScreen() {
-    const hafalCount = allCards.filter(c => c.status === 1 && !c.is_archived).length;
-    const belumCount = allCards.filter(c => c.status === 0 && !c.is_archived).length;
+    const hafalSessionCount = sessionHistory.filter(h => !h.wasBelum).length;
+    const belumSessionCount = sessionBelumIds.size;
+    const belumTotalCount = allCards.filter(c => c.status === 0 && !c.is_archived).length;
 
     // Update badge di header agar sinkron dengan last action
-    els.hafalBadge.innerText = hafalCount;
-    els.belumBadge.innerText = sessionBelumIds.size;
+    els.hafalBadge.innerText = hafalSessionCount;
+    els.belumBadge.innerText = belumSessionCount;
 
     els.cardStage.classList.add('hidden');
     document.querySelector('.status-actions-nav').classList.add('hidden');
     els.resultScreen.classList.remove('hidden');
 
-    els.finalHafal.innerText = hafalCount;
-    els.finalBelum.innerText = sessionBelumIds.size;
-    els.unlearnedCount.innerText = belumCount;
+    els.finalHafal.innerText = hafalSessionCount;
+    els.finalBelum.innerText = belumSessionCount;
+    els.unlearnedCount.innerText = belumTotalCount;
 
     els.progress.innerText = "Review Selesai";
 
