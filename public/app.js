@@ -19,7 +19,8 @@ let currentIndex = 0;
 let isEditingCardBack = false;
 let isEditingJikoshoukai = false;
 let sessionHistory = []; // Track { cardId, wasBelum } to allow undo
-let currentManagementFilter = 'aktif'; // Filter card management: 'semua' | 'aktif' | 'arsip' | 'starred'
+let editingCardId = null;
+let currentManagementFilter = 'belum'; // Filter card management: 'hafal' | 'belum' | 'arsip' | 'starred'
 
 // Persist session state across page refreshes
 const savedBelum = JSON.parse(localStorage.getItem('sessionBelumIds') || '[]');
@@ -135,13 +136,15 @@ const els = {
     cardsList: document.getElementById('cards-list'),
     statTotal: document.getElementById('stat-total'),
     statHafal: document.getElementById('stat-hafal'),
-    statFu: document.getElementById('stat-fu'),
+    statBelum: document.getElementById('stat-belum'),
     addCardBtn: document.getElementById('add-card-btn'),
     cardSearch: document.getElementById('card-search'),
     addCardModal: document.getElementById('add-card-modal'),
+    modalCardTitle: document.getElementById('modal-card-title'),
     newQ: document.getElementById('new-q'),
     newA: document.getElementById('new-a'),
     newT: document.getElementById('new-t'),
+    newH: document.getElementById('new-h'),
     addModalSave: document.getElementById('add-modal-save'),
     addModalClose: document.getElementById('add-modal-close'),
     themeToggle: document.getElementById('theme-toggle')
@@ -195,28 +198,29 @@ async function refreshStats() {
     const stats = await res.json();
     els.statTotal.innerText = stats.total;
     els.statHafal.innerText = stats.hafal;
-    els.statFu.innerText = stats.followUps;
+    els.statBelum.innerText = stats.belum;
 }
 
 function renderManagementList() {
     const searchQuery = els.cardSearch.value.toLowerCase();
 
-    // Update Counts
-    document.getElementById('count-semua').innerText = allCards.length;
-    document.getElementById('count-aktif').innerText = allCards.filter(c => !c.is_archived).length;
-    document.getElementById('count-starred').innerText = allCards.filter(c => c.is_starred).length;
+    // Update Counts (Hanya hitung kartu non-arsip untuk tab progres)
+    document.getElementById('count-hafal').innerText = allCards.filter(c => !c.is_archived && c.status === 1).length;
+    document.getElementById('count-belum').innerText = allCards.filter(c => !c.is_archived && c.status === 0).length;
+    document.getElementById('count-starred').innerText = allCards.filter(c => !c.is_archived && c.is_starred).length;
     document.getElementById('count-arsip').innerText = allCards.filter(c => !!c.is_archived).length;
 
     // Filter berdasarkan tab aktif
     let source;
     if (currentManagementFilter === 'starred') {
-        source = allCards.filter(c => c.is_starred);
+        source = allCards.filter(c => !c.is_archived && c.is_starred);
     } else if (currentManagementFilter === 'arsip') {
         source = allCards.filter(c => c.is_archived);
-    } else if (currentManagementFilter === 'aktif') {
-        source = allCards.filter(c => !c.is_archived);
+    } else if (currentManagementFilter === 'hafal') {
+        source = allCards.filter(c => !c.is_archived && c.status === 1);
     } else {
-        source = [...allCards];
+        // Default: Belum Hafal
+        source = allCards.filter(c => !c.is_archived && c.status === 0);
     }
 
     const filtered = source.filter(c =>
@@ -270,20 +274,16 @@ function setManagementFilter(filter) {
 }
 
 function editFromList(id) {
-    const idx = allCards.findIndex(c => c.id === id);
-    if (idx !== -1) {
-        filteredCards = allCards.filter(c => !c.is_archived && c.status === 0);
-        // Cari card ini di filteredCards, jika archived tidak masuk review
-        const filteredIdx = filteredCards.findIndex(c => c.id === id);
-        if (filteredIdx !== -1) {
-            currentIndex = filteredIdx;
-        } else {
-            // Card diarsipkan atau sudah hafal, buka dengan memuat semua
-            filteredCards = [...allCards];
-            currentIndex = allCards.findIndex(c => c.id === id);
-        }
-        renderReview();
-        document.querySelector('.tab-item[data-target="view-review"]').click();
+    const card = allCards.find(c => c.id === id);
+    if (card) {
+        editingCardId = id;
+        els.modalCardTitle.innerText = "Edit Card";
+        els.newQ.value = card.question;
+        els.newA.value = card.answer;
+        els.newT.value = card.tips || "";
+        els.newH.value = card.hint || "";
+        els.addModalSave.innerText = "Save Changes";
+        els.addCardModal.style.display = "block";
     }
 }
 
@@ -318,26 +318,49 @@ async function deleteFromList(id) {
 }
 
 els.addCardBtn.onclick = () => {
+    editingCardId = null;
+    els.modalCardTitle.innerText = "Add New Question";
     els.newQ.value = "";
     els.newA.value = "";
     els.newT.value = "";
+    els.newH.value = "";
+    els.addModalSave.innerText = "Add Card";
     els.addCardModal.style.display = "block";
 };
 
 els.addModalClose.onclick = () => els.addCardModal.style.display = "none";
 
 els.addModalSave.onclick = async () => {
-    const body = { question: els.newQ.value, answer: els.newA.value, tips: els.newT.value };
+    const body = {
+        question: els.newQ.value,
+        answer: els.newA.value,
+        tips: els.newT.value,
+        hint: els.newH.value
+    };
     if (!body.question || !body.answer) return showModal("Mohon isi pertanyaan dan jawaban.", "Peringatan");
 
-    await fetch('/api/cards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
+    if (editingCardId) {
+        // UPDATE EXISTING
+        await fetch(`/api/cards/${editingCardId}/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        // Also update hint separately for consistency if needed, but the update endpoint should handle it.
+        // Let's re-verify the /update endpoint in server.js to see if it includes hint.
+        // Wait, I didn't update /update endpoint to include hint. I should do that.
+    } else {
+        // CREATE NEW
+        await fetch('/api/cards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+    }
 
     els.addCardModal.style.display = "none";
     init();
+    showToast(editingCardId ? "Kartu berhasil diperbarui" : "Kartu baru ditambahkan", "success");
 };
 
 function copyToClipboard(text) {
@@ -391,7 +414,7 @@ function renderReview() {
     toggleEditVisibility(false);
 
     const totalReview = filteredCards.length;
-    const hafalTotalCount = allCards.filter(c => c.status === 1).length;
+    const hafalTotalCount = allCards.filter(c => c.status === 1 && !c.is_archived).length;
     const belumSessionCount = sessionBelumIds.size;
 
     els.hafalBadge.innerText = hafalTotalCount;
@@ -414,7 +437,9 @@ function renderReview() {
 
     const current = filteredCards[currentIndex];
     const activeCount = allCards.filter(c => !c.is_archived).length;
-    els.progress.innerText = `${currentIndex + 1} / ${activeCount}`;
+    // Hitung progres: Total kartu aktif - (Sisa kartu di sesi - urutan saat ini)
+    const overallIndex = activeCount - (filteredCards.length - (currentIndex));
+    els.progress.innerText = `${overallIndex + 1} / ${activeCount}`;
 
     els.q.innerText = formatQuestion(current.question);
     els.qEdit.value = current.question;
@@ -487,7 +512,90 @@ function renderReview() {
         starBtn.innerHTML = `<i class="${current.is_starred ? 'fas' : 'far'} fa-star"></i>`;
     }
 
+    // Inject hint area di bawah pertanyaan secara dinamis
+    const qWrapper = document.querySelector('.face.front .q-wrapper');
+    let hintArea = document.getElementById('front-hint-area');
+    if (!hintArea) {
+        hintArea = document.createElement('div');
+        hintArea.id = 'front-hint-area';
+        hintArea.className = 'front-hint-area';
+        qWrapper.parentNode.insertBefore(hintArea, qWrapper.nextSibling);
+    }
+    renderFrontHint(current);
+
     els.card.classList.remove('flipped');
+}
+
+function renderFrontHint(card) {
+    const hintArea = document.getElementById('front-hint-area');
+    if (!hintArea) return;
+    const hasHint = card.hint && card.hint.trim().length > 0;
+    if (hasHint) {
+        hintArea.innerHTML = `
+            <button class="hint-toggle-btn" id="hint-toggle-btn" onclick="toggleHintReveal()">
+                <i class="fas fa-lightbulb"></i> Lihat Hint
+            </button>
+            <div class="hint-text hidden" id="hint-text-display">
+                <span>${card.hint}</span>
+                <button class="hint-edit-small" onclick="openHintEditor()" title="Edit hint"><i class="fas fa-pencil-alt"></i></button>
+            </div>`;
+    } else {
+        hintArea.innerHTML = `
+            <button class="hint-add-btn" onclick="openHintEditor()">
+                <i class="fas fa-plus"></i> Tambah Hint
+            </button>`;
+    }
+    // Sembunyikan saat edit mode
+    hintArea.classList.remove('hidden');
+}
+
+function toggleHintReveal() {
+    const btn = document.getElementById('hint-toggle-btn');
+    const text = document.getElementById('hint-text-display');
+    if (!text) return;
+    const isHidden = text.classList.contains('hidden');
+    if (isHidden) {
+        text.classList.remove('hidden');
+        btn.innerHTML = '<i class="fas fa-lightbulb"></i> Sembunyikan Hint';
+    } else {
+        text.classList.add('hidden');
+        btn.innerHTML = '<i class="fas fa-lightbulb"></i> Lihat Hint';
+    }
+}
+
+function openHintEditor() {
+    const current = filteredCards[currentIndex];
+    if (!current) return;
+    const hintArea = document.getElementById('front-hint-area');
+    hintArea.innerHTML = `
+        <div class="hint-editor-wrap">
+            <textarea id="hint-input" class="hint-input" placeholder="Tulis petunjuk singkat..." spellcheck="false">${current.hint || ''}</textarea>
+            <div class="hint-editor-actions">
+                <button class="hint-save-btn" onclick="saveHint()"><i class="fas fa-save"></i> Simpan</button>
+                <button class="hint-cancel-btn" onclick="renderFrontHint(filteredCards[currentIndex])">Batal</button>
+            </div>
+        </div>`;
+    document.getElementById('hint-input').focus();
+}
+
+async function saveHint() {
+    const current = filteredCards[currentIndex];
+    if (!current) return;
+    const input = document.getElementById('hint-input');
+    const hintValue = input ? input.value.trim() : '';
+    try {
+        const res = await fetch(`/api/cards/${current.id}/hint`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ hint: hintValue })
+        });
+        if (!res.ok) throw new Error('Gagal menyimpan');
+        current.hint = hintValue;
+        renderFrontHint(current);
+        showToast(hintValue ? 'Hint disimpan' : 'Hint dihapus', 'success');
+    } catch (e) {
+        showToast('Gagal menyimpan hint', 'danger');
+    }
 }
 
 function toggleEditVisibility(editing) {
@@ -784,8 +892,12 @@ async function updateStatus(status) {
 }
 
 function showResultScreen() {
-    const hafalCount = allCards.filter(c => c.status === 1).length;
-    const belumCount = allCards.filter(c => c.status === 0).length;
+    const hafalCount = allCards.filter(c => c.status === 1 && !c.is_archived).length;
+    const belumCount = allCards.filter(c => c.status === 0 && !c.is_archived).length;
+
+    // Update badge di header agar sinkron dengan last action
+    els.hafalBadge.innerText = hafalCount;
+    els.belumBadge.innerText = sessionBelumIds.size;
 
     els.cardStage.classList.add('hidden');
     document.querySelector('.status-actions-nav').classList.add('hidden');
@@ -796,6 +908,16 @@ function showResultScreen() {
     els.unlearnedCount.innerText = belumCount;
 
     els.progress.innerText = "Review Selesai";
+
+    // Efek perayaan Confetti
+    if (typeof confetti === 'function') {
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#38bdf8', '#22c55e', '#ffffff']
+        });
+    }
 }
 
 els.restartProgressBtn.onclick = async () => {
@@ -808,8 +930,8 @@ els.restartProgressBtn.onclick = async () => {
 
 els.studyUnlearnedBtn.onclick = () => {
     clearSession(); // Reset counter belum dan posisi kartu
-    // Filter hanya kartu yang belum hafal (status 0)
-    filteredCards = allCards.filter(c => c.status === 0);
+    // Filter hanya kartu yang belum hafal (status 0) dan tidak diarsipkan
+    filteredCards = allCards.filter(c => c.status === 0 && !c.is_archived);
     currentIndex = 0;
     saveSession();
     renderReview();

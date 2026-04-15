@@ -7,6 +7,7 @@
     <title>Mensetsu Master</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
 <body>
@@ -166,8 +167,8 @@
                             <span class="stat-label">Hafal</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-value" id="stat-fu">0</span>
-                            <span class="stat-label">Follow-ups</span>
+                            <span class="stat-value" id="stat-belum">0</span>
+                            <span class="stat-label">Belum Hafal</span>
                         </div>
                     </div>
                 </div>
@@ -178,21 +179,21 @@
                     </div>
                 </div>
                 <div class="m-filter-tabs">
-                    <button class="m-filter-tab active" data-filter="aktif" onclick="setManagementFilter('aktif')"
-                        title="Aktif">
-                        <i class="fas fa-layer-group"></i> <span class="tab-count" id="count-aktif">0</span>
+                    <button class="m-filter-tab active" data-filter="belum" onclick="setManagementFilter('belum')"
+                        title="Belum Hafal">
+                        <i class="fas fa-times-circle"></i> <span class="tab-count" id="count-belum">0</span>
                     </button>
                     <button class="m-filter-tab" data-filter="starred" onclick="setManagementFilter('starred')"
                         title="Starred">
                         <i class="fas fa-star"></i> <span class="tab-count" id="count-starred">0</span>
                     </button>
+                    <button class="m-filter-tab" data-filter="hafal" onclick="setManagementFilter('hafal')"
+                        title="Hafal">
+                        <i class="fas fa-check-circle"></i> <span class="tab-count" id="count-hafal">0</span>
+                    </button>
                     <button class="m-filter-tab" data-filter="arsip" onclick="setManagementFilter('arsip')"
                         title="Arsip">
                         <i class="fas fa-archive"></i> <span class="tab-count" id="count-arsip">0</span>
-                    </button>
-                    <button class="m-filter-tab" data-filter="semua" onclick="setManagementFilter('semua')"
-                        title="Semua">
-                        <i class="fas fa-th-list"></i> <span class="tab-count" id="count-semua">0</span>
                     </button>
                 </div>
                 <div id="cards-list" class="cards-management-list"></div>
@@ -217,24 +218,30 @@
         </nav>
     </div>
 
-    <!-- ADD CARD MODAL -->
+    <!-- CARD MODAL (Add/Edit) -->
     <div id="add-card-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Add New Question</h3>
+                <h3 id="modal-card-title">Add New Question</h3>
             </div>
             <div class="modal-body">
                 <div class="input-group">
                     <label>Question</label>
-                    <textarea id="new-q" placeholder="Enter question..."></textarea>
+                    <textarea id="new-q" placeholder="Contoh: 日本でのくらい働きたいですか？" spellcheck="false"></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Hint (Front Card Hint)</label>
+                    <textarea id="new-h" placeholder="Petunjuk singkat yang muncul di kartu depan..."
+                        spellcheck="false"></textarea>
                 </div>
                 <div class="input-group">
                     <label>Answer</label>
-                    <textarea id="new-a" placeholder="Enter answer..."></textarea>
+                    <textarea id="new-a" placeholder="Contoh: はい。できるだけ長く働きたいです。" spellcheck="false"></textarea>
                 </div>
                 <div class="input-group">
                     <label>Tips & Vocab (Optional)</label>
-                    <textarea id="new-t" placeholder="Enter tips..."></textarea>
+                    <textarea id="new-t" placeholder="Tambahkan daftar kosakata atau tips menjawab..."
+                        spellcheck="false"></textarea>
                 </div>
             </div>
             <div class="modal-footer">

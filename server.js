@@ -127,8 +127,8 @@ app.post('/api/cards/:id/follow-up', auth, async (req, res) => {
 
 app.post('/api/cards/:id/update', auth, async (req, res) => {
     try {
-        const { question, answer, tips } = req.body;
-        await run("UPDATE cards SET question = ?, answer = ?, tips = ? WHERE id = ? AND user_id = ?", [question, answer, tips, req.params.id, req.user.user_id]);
+        const { question, answer, tips, hint } = req.body;
+        await run("UPDATE cards SET question = ?, answer = ?, tips = ?, hint = ? WHERE id = ? AND user_id = ?", [question, answer, tips, hint, req.params.id, req.user.user_id]);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -160,6 +160,14 @@ app.post('/api/cards/:id/star', auth, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.patch('/api/cards/:id/hint', auth, async (req, res) => {
+    try {
+        const { hint } = req.body;
+        await run("UPDATE cards SET hint = ? WHERE id = ? AND user_id = ?", [hint || null, req.params.id, req.user.user_id]);
+        res.json({ success: true, hint });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.delete('/api/cards/:id', auth, async (req, res) => {
     try {
         await run("DELETE FROM cards WHERE id = ? AND user_id = ?", [req.params.id, req.user.user_id]);
@@ -169,9 +177,9 @@ app.delete('/api/cards/:id', auth, async (req, res) => {
 
 app.post('/api/cards', auth, async (req, res) => {
     try {
-        const { question, answer, tips } = req.body;
-        const result = await run("INSERT INTO cards (user_id, question, answer, tips) VALUES (?, ?, ?, ?)", [req.user.user_id, question, answer, tips]);
-        res.json({ id: result.lastID, question, answer, tips, status: 0 });
+        const { question, answer, tips, hint } = req.body;
+        const result = await run("INSERT INTO cards (user_id, question, answer, tips, hint) VALUES (?, ?, ?, ?, ?)", [req.user.user_id, question, answer, tips, hint]);
+        res.json({ id: result.lastID, question, answer, tips, hint, status: 0 });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -179,11 +187,11 @@ app.get('/api/stats', auth, async (req, res) => {
     try {
         const total = await query("SELECT COUNT(*) as count FROM cards WHERE user_id = ?", [req.user.user_id]);
         const hafal = await query("SELECT COUNT(*) as count FROM cards WHERE status = 1 AND user_id = ? AND is_archived = 0", [req.user.user_id]);
-        const followUps = await query("SELECT COUNT(*) as count FROM follow_ups f JOIN cards c ON f.card_id = c.id WHERE c.user_id = ? AND c.is_archived = 0", [req.user.user_id]);
+        const belum = await query("SELECT COUNT(*) as count FROM cards WHERE status = 0 AND user_id = ? AND is_archived = 0", [req.user.user_id]);
         res.json({
             total: total[0].count,
             hafal: hafal[0].count,
-            followUps: followUps[0].count
+            belum: belum[0].count
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });

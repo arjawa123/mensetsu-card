@@ -64,8 +64,9 @@ db.serialize(() => {
     // db.run("INSERT OR IGNORE INTO settings (key, value) VALUES ('jikoshoukai', 'Edit your Jikoshoukai here...')");
 
     // Migrasi: tambah kolom is_archived & is_starred jika belum ada
-    db.run("ALTER TABLE cards ADD COLUMN is_archived INTEGER DEFAULT 0", () => {});
-    db.run("ALTER TABLE cards ADD COLUMN is_starred INTEGER DEFAULT 0", () => {});
+    db.run("ALTER TABLE cards ADD COLUMN is_archived INTEGER DEFAULT 0", () => { });
+    db.run("ALTER TABLE cards ADD COLUMN is_starred INTEGER DEFAULT 0", () => { });
+    db.run("ALTER TABLE cards ADD COLUMN hint TEXT", () => { });
 });
 
 const query = (sql, params = []) => new Promise((resolve, reject) => {

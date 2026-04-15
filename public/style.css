@@ -970,7 +970,7 @@ body.light-mode .tips-display {
 .cards-management-list {
     flex: 1;
     overflow-y: auto;
-    padding: 0 20px 20px;
+    padding: 0 20px 100px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -1622,6 +1622,156 @@ body.light-mode .result-actions .btn-secondary {
 
 .toast-danger {
     background: #dc2626;
+}
+
+/* =====================
+   FRONT CARD HINT
+===================== */
+.front-hint-area {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 24px;
+}
+
+.hint-add-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 6px 16px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hint-add-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.light-mode .hint-add-btn {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode .hint-add-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.hint-toggle-btn {
+    background: transparent;
+    border: none;
+    color: #f59e0b;
+    /* Yellowish for hint */
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 6px 12px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.hint-toggle-btn:hover {
+    opacity: 1;
+}
+
+.hint-text {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--text-muted);
+    background: rgba(245, 158, 11, 0.05);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    padding: 10px 14px;
+    border-radius: 12px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    animation: fadeIn 0.3s ease;
+}
+
+.hint-edit-small {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--surface2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.hint-editor-wrap {
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hint-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--primary-muted);
+    border-radius: 12px;
+    padding: 12px;
+    color: var(--text);
+    font-size: 14px;
+    min-height: 80px;
+    resize: none;
+    outline: none;
+    text-align: center;
+}
+
+body.light-mode .hint-input {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.hint-input:focus {
+    border-color: var(--primary);
+}
+
+.hint-editor-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.hint-save-btn,
+.hint-cancel-btn {
+    padding: 6px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+}
+
+.hint-save-btn {
+    background: var(--primary);
+    color: white;
+}
+
+.hint-cancel-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+}
+
+body.light-mode .hint-cancel-btn {
+    background: rgba(0, 0, 0, 0.1);
 }
 
 @media (min-width: 600px) {
