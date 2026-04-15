@@ -370,6 +370,8 @@ body.light-mode .face {
     /* Bubble tidak tertutup oleh back-header absolute */
     scrollbar-width: thin;
     scrollbar-color: var(--primary-muted) transparent;
+    display: flex;
+    flex-direction: column;
 }
 
 .scroll-area::-webkit-scrollbar {
@@ -643,8 +645,8 @@ body.light-mode .tips-display {
 .add-tips-btn {
     width: 100%;
     padding: 11px;
-    margin-top: 20px;
-    margin-bottom: 14px;
+    margin-top: auto;
+    margin-bottom: 5px;
     background: transparent;
     color: var(--text-muted);
     border: 1px dashed rgba(255, 255, 255, 0.15);
