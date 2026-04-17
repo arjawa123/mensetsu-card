@@ -4,7 +4,7 @@
 deployment:
   tasks:
     # 1. Tentukan path tujuan (Ganti USERNAME_CPANEL dan FOLDER_APLIKASI)
-    - export DEPLOYPATH=/home/arjawamy/menset
+    - export DEPLOYPATH=/home/arjawamy/m.xnv.my.id
 
     # 2. Buat direktori jika belum ada
     - /bin/mkdir -p $DEPLOYPATH
